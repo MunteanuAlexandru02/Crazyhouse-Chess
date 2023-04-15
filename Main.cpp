@@ -210,7 +210,7 @@ class EngineComponents {
       state = EngineState::RECV_NEW;
       engineSide = PlaySide::NONE;
       sideToMove = PlaySide::WHITE;
-      isStarted = false;`
+      isStarted = false;
   }
 
   void enterForceMode() {

@@ -35,3 +35,27 @@ class Bot {
   static std::string getBotName();
 };
 #endif
+
+struct PieceData {
+  enum Piece type;
+  union {
+    bool moved = false;
+    bool lastMoved;  // for En Passant, eventually
+  };
+  bool color;
+  bool promoted = false;
+
+  PieceData(enum Piece type, bool color, bool promoted) {
+    this->type = type;
+    this->color = color;
+    this->promoted = promoted;
+  }
+
+  PieceData(enum Piece type, bool color) {
+    PieceData(type, color, false);
+  }
+
+  PieceData() {
+    PieceData(EMPTY, 0);
+  }
+};
