@@ -1,0 +1,58 @@
+Got new command
+newGame command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+force command
+Got new command
+usermove command
+state_value: FORCEMODE
+in recordMove function...
+Got new command
+usermove command
+state_value: FORCEMODE
+in recordMove function...
+Got new command
+usermove command
+state_value: FORCEMODE
+in recordMove function...
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+Got new command
+go command
+in calculateNextMove function...
+engine side == side to move
+in serializeMove function...
+Got new command
+Got new command
+Got new command
+usermove command
+PLAYING
+in recordMove function...
+in calculateNextMove function...
+engine side == side to move
+in serializeMove function...
+Got new command
+Got new command
+quit command
+VACA

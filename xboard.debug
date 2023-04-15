@@ -1,0 +1,177 @@
+locale = C.UTF-8
+recognized 'normal' (-1) as variant normal
+recognized 'normal' (-1) as variant normal
+recognized 'normal' (-1) as variant normal
+shuffleOpenings = 0
+shuffleOpenings = 0
+Version: xboard 4.9.1 + make ()
+Reset(1, 0) from gameMode 0
+recognized 'normal' (-1) as variant normal
+GameEnds(0, (null), 2)
+shuffleOpenings = 0
+StartChildProcess (dir=".") make run
+337 >first : xboard
+protover 2
+341 <first : ./Main
+344 <first : 
+344 <first : feature done=0 sigint=0 sigterm=0 san=0 reuse=0 usermove=1 analyze=0 ping=0 setboard=0 level=0 variants="crazyhouse" name="El_Prostovano" myname="El_Prostovano" done=1
+344 >first : accepted done
+344 >first : accepted sigint
+344 >first : accepted sigterm
+344 >first : accepted san
+344 >first : accepted reuse
+344 >first : accepted usermove
+344 >first : accepted analyze
+344 >first : accepted ping
+344 >first : accepted setboard
+344 >first : accepted level
+344 >first : accepted variants
+344 >first : accepted name
+345 >first : accepted myname
+345 >first : accepted done
+recognized 'crazyhouse' (-1) as variant crazyhouse
+Reset(1, 0) from gameMode 0
+recognized 'crazyhouse' (-1) as variant crazyhouse
+GameEnds(0, (null), 2)
+346 >first : quit
+shuffleOpenings = 0
+StartChildProcess (dir=".") make run
+422 >first : xboard
+protover 2
+423 >first : new
+random
+423 >first : variant crazyhouse
+423 >first : level 40 5 0
+423 >first : post
+423 >first : hard
+426 <first : ./Main
+428 <first : 
+428 <first : feature done=0 sigint=0 sigterm=0 san=0 reuse=0 usermove=1 analyze=0 ping=0 setboard=0 level=0 variants="crazyhouse" name="El_Prostovano" myname="El_Prostovano" done=1
+428 >first : accepted done
+428 >first : accepted sigint
+428 >first : accepted sigterm
+428 >first : accepted san
+428 >first : accepted reuse
+428 >first : accepted usermove
+428 >first : accepted analyze
+428 >first : accepted ping
+428 >first : accepted setboard
+428 >first : accepted level
+428 >first : accepted variants
+428 >first : accepted name
+428 >first : accepted myname
+428 >first : accepted done
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+recognized 'crazyhouse' (-1) as variant crazyhouse
+Reset(1, 1) from gameMode 0
+recognized 'crazyhouse' (-1) as variant crazyhouse
+GameEnds(0, (null), 2)
+19498 >first : quit
+shuffleOpenings = 0
+StartChildProcess (dir=".") make run
+19505 >first : xboard
+protover 2
+19506 >first : new
+random
+19506 >first : variant crazyhouse
+19506 >first : level 40 5 0
+19506 >first : post
+19506 >first : hard
+19511 <first : ./Main
+19512 <first : 
+19512 <first : feature done=0 sigint=0 sigterm=0 san=0 reuse=0 usermove=1 analyze=0 ping=0 setboard=0 level=0 variants="crazyhouse" name="El_Prostovano" myname="El_Prostovano" done=1
+19512 >first : accepted done
+19512 >first : accepted sigint
+19512 >first : accepted sigterm
+19512 >first : accepted san
+19512 >first : accepted reuse
+19512 >first : accepted usermove
+19512 >first : accepted analyze
+19512 >first : accepted ping
+19512 >first : accepted setboard
+19512 >first : accepted level
+19512 >first : accepted variants
+19512 >first : accepted name
+19512 >first : accepted myname
+19512 >first : accepted done
+31572 >first : name student
+31572 >first : black
+31572 >first : time 30000
+31572 >first : otim 30000
+31572 >first : white
+book hit = (NULL)
+31572 >first : go
+nps: w=-1, b=-1
+31575 <first : move a2a4
+Reset(1, 1) from gameMode 1
+recognized 'crazyhouse' (-1) as variant crazyhouse
+GameEnds(0, (null), 2)
+39027 >first : quit
+shuffleOpenings = 0
+StartChildProcess (dir=".") make run
+39035 >first : xboard
+protover 2
+39035 >first : new
+random
+39035 >first : variant crazyhouse
+39035 >first : level 40 5 0
+39035 >first : post
+39035 >first : hard
+39040 <first : ./Main
+39043 <first : 
+39043 <first : feature done=0 sigint=0 sigterm=0 san=0 reuse=0 usermove=1 analyze=0 ping=0 setboard=0 level=0 variants="crazyhouse" name="El_Prostovano" myname="El_Prostovano" done=1
+39043 >first : accepted done
+39043 >first : accepted sigint
+39043 >first : accepted sigterm
+39043 >first : accepted san
+39043 >first : accepted reuse
+39043 >first : accepted usermove
+39043 >first : accepted analyze
+39043 >first : accepted ping
+39043 >first : accepted setboard
+39043 >first : accepted level
+39044 >first : accepted variants
+39044 >first : accepted name
+39044 >first : accepted myname
+39044 >first : accepted done
+44397 >first : force
+52228 >first : usermove 52228 >first : a2a4
+54090 >first : usermove 54090 >first : d7d5
+57148 >first : usermove 57149 >first : b2b4
+65344 >first : name student
+65345 >first : white
+65345 >first : time 30000
+65345 >first : otim 30000
+65345 >first : black
+book hit = (NULL)
+65345 >first : go
+nps: w=-1, b=-1
+65345 <first : move h7h5
+69229 >first : time 29999
+69230 >first : otim 29611
+book hit = (NULL)
+69230 >first : usermove 69230 >first : c2c4
+69232 <first : move h7h5
+GameEnds(29, xboard exit, 2)
+104880 >first : result * {xboard exit}
+104881 >first : quit
