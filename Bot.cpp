@@ -48,8 +48,8 @@ void printTable() {
           ch = 'B';
           break;
         default:
-          ch = '0';
-          break;
+          f << "   ";
+          continue;
       };
       f << ch << (table[i][j].color?'w':'b') << ' ';
     }
@@ -95,6 +95,7 @@ Bot::Bot() {
 void Bot::recordMove(Move* move, PlaySide sideToMove) {
   /* You might find it useful to also separately
     * record last move in another custom field */
+  f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
   std::__cxx11::basic_string<char> src = *(move->getSource());
 

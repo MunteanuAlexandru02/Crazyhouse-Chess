@@ -37,25 +37,23 @@ class Bot {
 #endif
 
 struct PieceData {
-  enum Piece type;
+  enum Piece type = EMPTY;
+  bool color = BLACK;
+  bool promoted = false;
   union {
     bool moved = false;
     bool lastMoved;  // for En Passant, eventually
   };
-  bool color;
-  bool promoted = false;
 
-  PieceData(enum Piece type, bool color, bool promoted) {
-    this->type = type;
-    this->color = color;
-    this->promoted = promoted;
-  }
+  PieceData(enum Piece argtype, bool argcolor, bool argpromoted):
+    type(argtype), color(argcolor), promoted(argpromoted)
+  {}
 
-  PieceData(enum Piece type, bool color) {
-    PieceData(type, color, false);
-  }
+  PieceData(enum Piece argtype, bool argcolor):
+    type(argtype), color(argcolor), promoted(false)
+  {}
 
-  PieceData() {
-    PieceData(EMPTY, 0);
-  }
+  PieceData():
+    type(EMPTY), color(BLACK), promoted(false)
+  {}
 };
