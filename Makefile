@@ -28,3 +28,4 @@ $(PRGM): $(OBJS)
 clean:
 	rm -rf $(OBJS) $(OBJSH) $(DEPS) $(DEPSH)
 	rm -rf $(PRGM)
+	rm -rf xboard.debug

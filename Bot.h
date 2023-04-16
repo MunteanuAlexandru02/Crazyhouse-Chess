@@ -40,20 +40,18 @@ struct PieceData {
   enum Piece type = EMPTY;
   bool color = BLACK;
   bool promoted = false;
-  union {
-    bool moved = false;
-    bool lastMoved;  // for En Passant, eventually
-  };
+  bool moved = false;
+  bool enPassantEligible = false;  // for En Passant, eventually
 
   PieceData(enum Piece argtype, bool argcolor, bool argpromoted):
     type(argtype), color(argcolor), promoted(argpromoted)
   {}
 
   PieceData(enum Piece argtype, bool argcolor):
-    type(argtype), color(argcolor), promoted(false)
+    type(argtype), color(argcolor)
   {}
 
   PieceData():
-    type(EMPTY), color(BLACK), promoted(false)
+    type(EMPTY)
   {}
 };

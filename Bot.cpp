@@ -98,11 +98,10 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
   /* You might find it useful to also separately
     * record last move in another custom field */
   f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
-  std::__cxx11::basic_string<char> dest = *(move->getDestination());
-  std::__cxx11::basic_string<char> src = *(move->getSource());
 
+  std::__cxx11::basic_string<char> src;
+  std::__cxx11::basic_string<char> dest = *(move->getDestination());
   PieceData *pieceDest = &(table[getCol(dest)][getRow(dest)]);
-  PieceData *pieceSrc = &(table[getCol(src)][getRow(src)]);
 
   if (pieceDest->type != EMPTY) {
     if (pieceDest->promoted == true) {
@@ -112,9 +111,89 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
     }
   }
 
-  *pieceDest = *pieceSrc;
-  pieceDest->moved = true;
-  pieceSrc->type = EMPTY;
+  if (move->isNormal() || move->isPromotion()) {
+    src = *(move->getSource());
+    PieceData *pieceSrc = &(table[getCol(src)][getRow(src)]);
+
+    *pieceDest = *pieceSrc;
+    pieceDest->moved = true;
+    pieceSrc->type = EMPTY;
+
+    if (move->isPromotion()) {
+      pieceDest->type = *(move->getReplacement());
+      pieceDest->promoted = true;
+    } else if (pieceDest->type == KING) {  // testare rocada
+      int8_t kingRow;
+      switch(sideToMove) {
+        case BLACK:
+          kingRow = 8;
+          break;
+        case WHITE:
+          kingRow = 1;
+          break;
+        default:
+          kingRow = 0;
+          break;
+      }
+
+      if (getCol(src) == E && getRow(src) == kingRow) {
+        if (getCol(dest) == G && getRow(dest) == kingRow) {  // rocada mica
+          table[F][kingRow] = table[H][kingRow];
+          table[F][kingRow].moved = true;
+          table[H][kingRow].type = EMPTY;
+        } else if (getCol(dest) == C && getRow(dest) == kingRow) {  // rocada mare
+          table[D][kingRow] = table[A][kingRow];
+          table[D][kingRow].moved = true;
+          table[A][kingRow].type = EMPTY;
+        }
+      }
+    } else if (pieceDest->type == PAWN) {  // testare En Passant
+      PieceData *pieceBehind;
+      switch(sideToMove) {
+        case BLACK:
+          pieceBehind = &(table[getCol(dest)][getRow(dest) + 1]);
+          break;
+        case WHITE:
+          pieceBehind = &(table[getCol(dest)][getRow(dest) - 1]);
+          break;
+        default:
+          break;
+      }
+
+      if (pieceBehind->enPassantEligible == true && pieceBehind->color != sideToMove) {
+        captured[sideToMove][PAWN]++;
+        pieceBehind->type = EMPTY;
+      }
+    }
+  } else if (move->isDropIn()) {
+    *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
+    captured[sideToMove][pieceDest->type]--;
+  }
+
+  for (int i = A; i <= H; ++i)
+    for (int j = 1; j <= 8; ++j)
+      table[i][j].enPassantEligible = false;
+
+  if (pieceDest->type == PAWN && move->isNormal())  // check En Passant Eligibility
+    if (getCol(src) == getCol(dest)) {
+      int8_t startRow, endRow;
+      switch(sideToMove) {
+        case BLACK:
+          startRow = 7;
+          endRow = 5;
+          break;
+        case WHITE:
+          startRow = 2;
+          endRow = 4;
+          break;
+        default:
+          break;
+      }
+
+    if (getRow(src) == startRow && getRow(dest) == endRow) {
+      pieceDest->enPassantEligible = true;
+    }
+  }
 
   printTable();
 }
