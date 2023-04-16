@@ -26,6 +26,8 @@ int8_t getRow(std::__cxx11::basic_string<char> s) {
 
 void printTable() {
   for (int i = A; i <= H; ++i) {
+    f << '|';
+
     for (int j = 1; j <= 8; ++j) {
       char ch;
       switch (table[i][j].type) {
@@ -48,10 +50,10 @@ void printTable() {
           ch = 'B';
           break;
         default:
-          f << "   ";
+          f << "  |";
           continue;
       };
-      f << ch << (table[i][j].color?'w':'b') << ' ';
+      f << ch << (table[i][j].color?'w':'b') << '|';
     }
     f << '\n';
   }
