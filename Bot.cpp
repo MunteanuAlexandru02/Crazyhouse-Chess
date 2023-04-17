@@ -3,18 +3,11 @@
 
 #include <bits/stdc++.h>
 
-#define N 8
-
-enum Column { Z, A, B, C, D, E ,F, G, H };
-
-extern enum PlaySide getEngineSide();
-extern enum PlaySide getSideToMove();
+std::ofstream f("myLog.txt");
 
 const std::string Bot::BOT_NAME = "El_Prostovano"; /* Edit this, escaped characters are forbidden */
 
-std ::ofstream f("myLog.txt");
-std :: vector <std :: vector <PieceData> > table(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
-int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+std :: vector <std :: pair<int8_t, int8_t>> kingPos(2);
 
 enum Column getCol(std::__cxx11::basic_string<char> s) {
   return (enum Column)(s.at(0) - 'a' + 1);
@@ -24,9 +17,21 @@ int8_t getRow(std::__cxx11::basic_string<char> s) {
   return (int8_t)(s.at(1) - '0');
 }
 
-void printTable() {
+std::optional<std::string> coordToStr(int8_t x, int8_t y) {
+  char s[3];
+  s[0] = x - 1 + 'a';
+  s[1] = y + '0';
+  s[2] = 0;
+
+  return std::optional{s};
+}
+
+void Bot::printTable() {
+  printTable(currentTable);
+}
+void Bot::printTable(Table table) {
   for (int i = A; i <= H; ++i) {
-    f << '|';
+    //f << '|';
 
     for (int j = 1; j <= 8; ++j) {
       char ch;
@@ -50,54 +55,71 @@ void printTable() {
           ch = 'B';
           break;
         default:
-          f << "  |";
+          ch = ch;
+          //f << "  |";
           continue;
       };
-      f << ch << (table[i][j].color?'w':'b') << '|';
+      //f << ch << (table[i][j].color?'w':'b') << '|';
     }
-    f << '\n';
+    //f << '\n';
   }
-  f << "\n\n";
+  //f << "\n\n";
 }
 
 Bot::Bot() {
+  //f << "Before constructing table\n\n";
+  currentTable = Table(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
+  //f << "After constructing table\n\n";
+
   /* Add pawns */
   for (int i = A; i <= H; ++i) {
-    table[i][2] = PieceData(PAWN, WHITE);
-    table[i][7] = PieceData(PAWN, BLACK);
+    currentTable[i][2] = PieceData(PAWN, WHITE);
+    currentTable[i][7] = PieceData(PAWN, BLACK);
   }
 
   /* Add ROOOOOOOOOOOOOOOOOOOOOOOOOOOOK */
-  table[H][8] = table[A][8] = PieceData(ROOK, BLACK);
-  table[H][1] = table[A][1] = PieceData(ROOK, WHITE);
+  currentTable[H][8] = currentTable[A][8] = PieceData(ROOK, BLACK);
+  currentTable[H][1] = currentTable[A][1] = PieceData(ROOK, WHITE);
 
   /* Add Bishops */
-  table[C][8] = table[F][8] = PieceData(BISHOP, BLACK);
-  table[C][1] = table[F][1] = PieceData(BISHOP, WHITE);
+  currentTable[C][8] = currentTable[F][8] = PieceData(BISHOP, BLACK);
+  currentTable[C][1] = currentTable[F][1] = PieceData(BISHOP, WHITE);
   
   /* Add Knights */
-  table[B][1] = PieceData(KNIGHT, WHITE);
-  table[G][1] = PieceData(KNIGHT, WHITE);
+  currentTable[B][1] = PieceData(KNIGHT, WHITE);
+  currentTable[G][1] = PieceData(KNIGHT, WHITE);
   
-  table[B][8] = PieceData(KNIGHT, BLACK);
-  table[G][8] = PieceData(KNIGHT, BLACK);
+  currentTable[B][8] = PieceData(KNIGHT, BLACK);
+  currentTable[G][8] = PieceData(KNIGHT, BLACK);
 
   /* Add Queens */
-  table[D][8] = PieceData(QUEEN, BLACK);
-  table[D][1] = PieceData(QUEEN, WHITE);
+  currentTable[D][8] = PieceData(QUEEN, BLACK);
+  currentTable[D][1] = PieceData(QUEEN, WHITE);
 
   /* Add Kings */
-  table[E][8] = PieceData(KING, BLACK);
-  table[E][1] = PieceData(KING, WHITE);
+  currentTable[E][8] = PieceData(KING, BLACK);
+  currentTable[E][1] = PieceData(KING, WHITE);
+  kingPos.push_back(std :: pair<int8_t, int8_t>(E, 8));
+  kingPos.push_back(std :: pair<int8_t, int8_t>(E, 1));
 
-  f << "Initial table:\n";
-  printTable();
+  ////f << "Initial table:\n";
+  // printTable();
+}
+
+Table Bot::createModifiedTable(Move* move, Table table) {
+  Table ret = table;
+  Bot::recordMove(move, getSideToMove(), ret);
+  return ret;
 }
 
 void Bot::recordMove(Move* move, PlaySide sideToMove) {
+  recordMove(move, sideToMove, currentTable);
+}
+
+void Bot::recordMove(Move* move, PlaySide sideToMove, Table table) {
   /* You might find it useful to also separately
     * record last move in another custom field */
-  f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
+  //f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
 
   std::__cxx11::basic_string<char> src;
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
@@ -205,23 +227,58 @@ Move* Bot::calculateNextMove() {
    * Return move that you are willing to submit
    * Move is to be constructed via one of the factory methods declared in Move.h */
 
-  f<< "in calculateNextMove function...\n";
+  //f << "in calculateNextMove function...\n";
 
-  if (getEngineSide() == getSideToMove()) {
+  // if (getEngineSide() == getSideToMove()) {
     
-    f << "engine side == side to move\n";
-    fflush(stdout);
+  //   //f << "engine side == side to move\n";
+  //   fflush(stdout);
 
-    if (getEngineSide() == WHITE) {
-      return Move::moveTo("a2", "a4");
-    } else {
-      return Move::moveTo("h7", "h5");
+  //   if (getEngineSide() == WHITE) {
+  //     return Move::moveTo("a2", "a4");
+  //   } else {
+  //     return Move::moveTo("h7", "h5");
+  //   }
+  // } else {
+  //   //f << "Wtf happened here? (engine side != side to move)\n";
+  // }
+
+  // fflush(stdout);
+
+  for (int i = A; i <= H; ++i) {
+    for (int j = 1; j <= 8; ++j) {
+      switch (currentTable[i][j].type) {
+        case PAWN:
+
+          break;
+        case KNIGHT:
+          Bot::checkKnightMoves(i, j);
+          break;
+        case QUEEN:
+
+          break;
+        case KING:
+          
+          break;
+        case ROOK:
+          Bot::checkRookMoves(i, j);
+          break;
+        case BISHOP:
+          Bot::checkBishopMoves(i, j);
+          break;
+        default:
+        
+          continue;
+      };
     }
-  } else {
-    f << "Wtf happened here? (engine side != side to move)\n";
   }
 
-  fflush(stdout);
+  while (!Q.empty()) {
+    Move *m = Q.front();
+    f << m->source.value() << "->" << m->destination.value() << ", ";
+    Q.pop();
+  }
+  f << '\n';
   return Move::resign();
 }
 
