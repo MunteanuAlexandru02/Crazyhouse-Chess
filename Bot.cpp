@@ -3,7 +3,9 @@
 
 #include <bits/stdc++.h>
 
-std::ofstream f("myLog.txt");
+// std::ofstream f("myLog.txt");
+extern std :: ofstream f;
+
 
 const std::string Bot::BOT_NAME = "El_Prostovano"; /* Edit this, escaped characters are forbidden */
 
@@ -27,15 +29,15 @@ std::optional<std::string> coordToStr(int8_t x, int8_t y) {
 }
 
 void Bot::printTable() {
-  printTable(currentTable);
+  printTable(&currentTable);
 }
-void Bot::printTable(Table table) {
+void Bot::printTable(Table *table) {
   for (int i = A; i <= H; ++i) {
-    //f << '|';
+    f << '|';
 
     for (int j = 1; j <= 8; ++j) {
       char ch;
-      switch (table[i][j].type) {
+      switch ((*table)[i][j].type) {
         case PAWN:
           ch = 'P';
           break;
@@ -56,19 +58,19 @@ void Bot::printTable(Table table) {
           break;
         default:
           ch = ch;
-          //f << "  |";
+          f << "  |";
           continue;
       };
-      //f << ch << (table[i][j].color?'w':'b') << '|';
+      f << ch << ((*table)[i][j].color?'w':'b') << '|';
     }
-    //f << '\n';
+    f << '\n';
   }
-  //f << "\n\n";
+  f << "\n\n";
 }
 
 Bot::Bot() {
-  //f << "Before constructing table\n\n";
-  currentTable = Table(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
+  f << "Before constructing table\n\n";
+  currentTable = std :: vector(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
   //f << "After constructing table\n\n";
 
   /* Add pawns */
@@ -102,28 +104,29 @@ Bot::Bot() {
   kingPos.push_back(std :: pair<int8_t, int8_t>(E, 8));
   kingPos.push_back(std :: pair<int8_t, int8_t>(E, 1));
 
-  ////f << "Initial table:\n";
-  // printTable();
+  f << "Initial table:\n";
+  printTable();
 }
 
-Table Bot::createModifiedTable(Move* move, Table table) {
-  Table ret = table;
+Table* Bot::createModifiedTable(Move* move, Table table) {
+  Table *ret = new Table;
+  *ret = table; 
   Bot::recordMove(move, getSideToMove(), ret);
   return ret;
 }
 
 void Bot::recordMove(Move* move, PlaySide sideToMove) {
-  recordMove(move, sideToMove, currentTable);
+  recordMove(move, sideToMove, &currentTable);
 }
 
-void Bot::recordMove(Move* move, PlaySide sideToMove, Table table) {
+void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
   /* You might find it useful to also separately
     * record last move in another custom field */
-  //f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
+  f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
 
   std::__cxx11::basic_string<char> src;
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
-  PieceData *pieceDest = &(table[getCol(dest)][getRow(dest)]);
+  PieceData *pieceDest = &((*table)[getCol(dest)][getRow(dest)]);
 
   if (pieceDest->type != EMPTY) {
     if (pieceDest->promoted == true) {
@@ -135,7 +138,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table table) {
 
   if (move->isNormal() || move->isPromotion()) {
     src = *(move->getSource());
-    PieceData *pieceSrc = &(table[getCol(src)][getRow(src)]);
+    PieceData *pieceSrc = &((*table)[getCol(src)][getRow(src)]);
 
     *pieceDest = *pieceSrc;
     pieceDest->moved = true;
@@ -160,23 +163,23 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table table) {
 
       if (getCol(src) == E && getRow(src) == kingRow) {
         if (getCol(dest) == G && getRow(dest) == kingRow) {  // rocada mica
-          table[F][kingRow] = table[H][kingRow];
-          table[F][kingRow].moved = true;
-          table[H][kingRow].type = EMPTY;
+          (*table)[F][kingRow] = (*table)[H][kingRow];
+          (*table)[F][kingRow].moved = true;
+          (*table)[H][kingRow].type = EMPTY;
         } else if (getCol(dest) == C && getRow(dest) == kingRow) {  // rocada mare
-          table[D][kingRow] = table[A][kingRow];
-          table[D][kingRow].moved = true;
-          table[A][kingRow].type = EMPTY;
+          (*table)[D][kingRow] = (*table)[A][kingRow];
+          (*table)[D][kingRow].moved = true;
+          (*table)[A][kingRow].type = EMPTY;
         }
       }
     } else if (pieceDest->type == PAWN) {  // testare En Passant
       PieceData *pieceBehind;
       switch(sideToMove) {
         case BLACK:
-          pieceBehind = &(table[getCol(dest)][getRow(dest) + 1]);
+          pieceBehind = &((*table)[getCol(dest)][getRow(dest) + 1]);
           break;
         case WHITE:
-          pieceBehind = &(table[getCol(dest)][getRow(dest) - 1]);
+          pieceBehind = &((*table)[getCol(dest)][getRow(dest) - 1]);
           break;
         default:
           break;
@@ -194,7 +197,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table table) {
 
   for (int i = A; i <= H; ++i)
     for (int j = 1; j <= 8; ++j)
-      table[i][j].enPassantEligible = false;
+      (*table)[i][j].enPassantEligible = false;
 
   if (pieceDest->type == PAWN && move->isNormal())  // check En Passant Eligibility
     if (getCol(src) == getCol(dest)) {
@@ -247,31 +250,45 @@ Move* Bot::calculateNextMove() {
 
   for (int i = A; i <= H; ++i) {
     for (int j = 1; j <= 8; ++j) {
-      switch (currentTable[i][j].type) {
-        case PAWN:
+      if (currentTable[i][j].color == getSideToMove()) {
+          switch (currentTable[i][j].type) {
+          case PAWN:
 
-          break;
-        case KNIGHT:
-          Bot::checkKnightMoves(i, j);
-          break;
-        case QUEEN:
+            break;
+          case KNIGHT:
+            Bot::checkKnightMoves(i, j);
+            break;
+          case QUEEN:
+            Bot::checkRookMoves(i, j);
+            Bot::checkBishopMoves(i, j);
+            break;
+          case KING:
+            checkPosition(i, j, i + 1, j + 1, true);
+            checkPosition(i, j, i + 1, j - 1, true);
+            checkPosition(i, j, i - 1, j + 1, true);
+            checkPosition(i, j, i - 1, j - 1, true);
 
-          break;
-        case KING:
+            checkPosition(i, j, i, j + 1, true);
+            checkPosition(i, j, i, j - 1, true);
+            checkPosition(i, j, i - 1, j, true);
+            checkPosition(i, j, i + 1, j, true);
+
+            break;
+          case ROOK:
+            Bot::checkRookMoves(i, j);
+            break;
+          case BISHOP:
+            Bot::checkBishopMoves(i, j);
+            break;
+          default:
           
-          break;
-        case ROOK:
-          Bot::checkRookMoves(i, j);
-          break;
-        case BISHOP:
-          Bot::checkBishopMoves(i, j);
-          break;
-        default:
-        
-          continue;
-      };
+            continue;
+        };
+      }
     }
   }
+
+  Move *m1 = Q.front();
 
   while (!Q.empty()) {
     Move *m = Q.front();
@@ -279,7 +296,8 @@ Move* Bot::calculateNextMove() {
     Q.pop();
   }
   f << '\n';
-  return Move::resign();
+  recordMove(m1, getSideToMove());
+  return m1;
 }
 
 std::string Bot::getBotName() { return Bot::BOT_NAME; }

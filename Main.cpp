@@ -12,7 +12,8 @@
 static PlaySide sideToMove;
 static PlaySide engineSide;
 
-extern std :: ofstream f;
+//extern std :: ofstream f;
+std::ofstream f("myLog.txt");
 
 static void toggleSideToMove() {
     static const PlaySide switchTable[] = {

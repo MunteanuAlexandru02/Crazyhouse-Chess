@@ -2,7 +2,8 @@
 #include "PlaySide.h"
 
 std :: queue<Move*> Q;
-Bot b;
+//Bot b;
+extern std::ofstream f;
 
 bool betweenBorders (int8_t x, int8_t y) {
 
@@ -13,38 +14,42 @@ bool betweenBorders (int8_t x, int8_t y) {
     return false;
 }
 
-bool isCheck(Table crtTable);
-
-void Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j) {
-    if (currentTable[i][j].type == EMPTY || currentTable[i][j].color != getSideToMove()) {
-        Move* m = Move :: moveTo(coordToStr(col, row), coordToStr(i, j));
-        if (isCheck(b.createModifiedTable(m, currentTable)) == false)
-            Q.push(m);
-    }
+void Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type = false) {
+    if (betweenBorders(i, j))
+        if (currentTable[i][j].type == EMPTY || currentTable[i][j].color != getSideToMove()) {
+            Move* m = Move :: moveTo(coordToStr(col, row), coordToStr(i, j));
+            if (type) {
+                if (isCheck(*(Bot::createModifiedTable(m, currentTable)), i, j) == false)
+                    Q.push(m);
+            } else {
+                if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
+                    Q.push(m);
+            }
+        }
 }
 
 /* Check possible moves for BISHOP */
 void Bot::checkBishopMoves(int8_t col, int8_t row) {
     for (int i = col + 1, j = row + 1; betweenBorders(i ,j); ++i, ++j) { // up right
-        checkPosition(row, col, i, j);
+        checkPosition(col, row, i, j);
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col + 1, j = row - 1; betweenBorders(i ,j); ++i, --j) { // down right
-        checkPosition(row, col, i, j);
+        checkPosition(col, row, i, j);
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col - 1, j = row + 1; betweenBorders(i ,j); --i, ++j) { // up left
-        checkPosition(row, col, i, j);
+        checkPosition(col, row, i, j);
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col - 1, j = row - 1; betweenBorders(i ,j); --i, --j) { // down left
-        checkPosition(row, col, i, j);
+        checkPosition(col, row, i, j);
         if (currentTable[i][j].type != EMPTY)
             break;
     }
@@ -56,50 +61,50 @@ void Bot::checkKnightMoves(int8_t col, int8_t row) {
     if (betweenBorders(col + 2, row + 1) &&
         (currentTable[col + 2][row + 1].type == EMPTY || currentTable[col + 2][row + 1].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col + 2, row + 1));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col - 2, row + 1) &&
         (currentTable[col - 2][row + 1].type == EMPTY || currentTable[col - 2][row + 1].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col - 2, row + 1));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col + 2, row - 1) &&
         (currentTable[col + 2][row - 1].type == EMPTY || currentTable[col + 2][row - 1].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col + 2, row - 1));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col - 2, row - 1) &&
         (currentTable[col - 2][row - 1].type == EMPTY || currentTable[col - 2][row - 1].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col - 2, row - 1));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
         
     if (betweenBorders(col + 1, row + 2) &&
         (currentTable[col + 1][row + 2].type == EMPTY || currentTable[col + 1][row + 2].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col + 1, row + 2));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col - 1, row + 2) &&
         (currentTable[col - 1][row + 2].type == EMPTY || currentTable[col - 1][row + 2].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col - 1, row + 2));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col + 1, row - 2) &&
         (currentTable[col + 1][row - 2].type == EMPTY || currentTable[col + 1][row - 2].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col + 1, row - 2));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     if (betweenBorders(col - 1, row - 2) &&
         (currentTable[col - 1][row - 2].type == EMPTY || currentTable[col - 1][row - 2].color != getSideToMove())) {
             Move *m = Move::moveTo(coordToStr(col, row), coordToStr(col - 1, row - 2));
-            if (isCheck(b.createModifiedTable(m, currentTable)) == false)
+            if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
                 Q.push(m);
         }
     
@@ -111,12 +116,12 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
     /*check this shit ca nu da break*/
     /* Check left - if black, else check right*/
     for (int i = col + 1; i <= H; i++) {
-        empty = currentTable[i][row].type == EMPTY;
-        canCapture = currentTable[i][row].color != getSideToMove(); 
+        empty = (currentTable[i][row].type == EMPTY);
+        canCapture = (currentTable[i][row].color != getSideToMove()); 
 
         if (empty || canCapture) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(i, row));
-            check = isCheck(b.createModifiedTable(m, currentTable)) == false;
+            check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
 
             /* If we can move to a position, we'll */
             if (check)
@@ -128,12 +133,12 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
 
     /* Check right - if black, else check left */
     for (int i = col - 1; i >= A; i--) {
-        empty = currentTable[i][row].type == EMPTY;
-        canCapture = currentTable[i][row].color != getSideToMove(); 
+        empty = (currentTable[i][row].type == EMPTY);
+        canCapture = (currentTable[i][row].color != getSideToMove()); 
         
         if (empty || canCapture) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(i, row));
-            check = isCheck(b.createModifiedTable(m, currentTable)) == false;
+            check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
 
             if (check)
                 Q.push(m);
@@ -144,12 +149,12 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
 
     /* Check down - if black, else check up */
     for (int i = row + 1; i <= 8; i++) {
-        empty = currentTable[col][i].type == EMPTY;
+        empty = (currentTable[col][i].type == EMPTY);
         canCapture = (currentTable[col][i].color != getSideToMove()); 
        
         if (empty || canCapture) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(col, i));
-            check = isCheck(b.createModifiedTable(m, currentTable)) == false;
+            check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
 
             if (check)
                 Q.push(m);
@@ -160,13 +165,13 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
 
     /* Check up - if black, else check down */
     for (int i = row - 1; i >= 1; i--) {
-        empty = currentTable[col][i].type == EMPTY;
+        empty = (currentTable[col][i].type == EMPTY);
         canCapture = (currentTable[col][i].color != getSideToMove()); 
+        f << "in rook\n";
 
         if (empty || canCapture) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(col, i));
-            check = isCheck(b.createModifiedTable(m, currentTable)) == false;
-
+            check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
             if (check)
                 Q.push(m);
         } else if (!empty && !canCapture) {
@@ -175,10 +180,15 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
     }
 }
 
-bool Bot::isCheck (Table crtTable) {
+/* */
 
+bool Bot::isCheck (Table crtTable) {
     int8_t king_x = kingPos[getSideToMove()].first;
     int8_t king_y = kingPos[getSideToMove()].second;
+    return isCheck(crtTable, king_x, king_y);
+}
+
+bool Bot::isCheck (Table crtTable, int8_t king_x, int8_t king_y) {
 
     int8_t x, y;
 

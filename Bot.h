@@ -59,9 +59,9 @@ class Bot {
    */
 
   void recordMove(Move* move, PlaySide sideToMove);
-  void recordMove(Move* move, PlaySide sideToMove, Table table);
+  void recordMove(Move* move, PlaySide sideToMove, Table *table);
 
-  Table createModifiedTable(Move* move, Table table);
+  Table *createModifiedTable(Move* move, Table table);
 
   /**
    * Calculates next move, in response to enemyMove
@@ -72,13 +72,14 @@ class Bot {
    */
   Move* calculateNextMove();
   void printTable();
-  void printTable(Table table);
+  void printTable(Table *table);
 
-  void checkPosition(int8_t col, int8_t row, int8_t i, int8_t j);
+  void checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type);
   void checkBishopMoves(int8_t col, int8_t row);
   void checkKnightMoves(int8_t col, int8_t row);
   void checkRookMoves(int8_t col, int8_t row);
   bool isCheck(Table crtTable);
+  bool isCheck(Table crtTable, int8_t king_x, int8_t king_y);
 
   static std::string getBotName();
 };
