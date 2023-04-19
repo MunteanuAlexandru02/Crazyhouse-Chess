@@ -74,7 +74,9 @@ class Bot {
   void printTable();
   void printTable(Table *table);
 
-  void checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type);
+  void add(Move *m);
+  Move* checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type);
+  void checkPawnMoves(int8_t col, int8_t row);
   void checkBishopMoves(int8_t col, int8_t row);
   void checkKnightMoves(int8_t col, int8_t row);
   void checkRookMoves(int8_t col, int8_t row);

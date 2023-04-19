@@ -14,16 +14,73 @@ bool betweenBorders (int8_t x, int8_t y) {
     return false;
 }
 
-void Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type = false) {
+void Bot::add(Move *m) {
+    if (m != NULL)
+        Q.push(m);
+}
+
+Move* Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type = false) {
     if (betweenBorders(i, j))
         if (currentTable[i][j].type == EMPTY || currentTable[i][j].color != getSideToMove()) {
             Move* m = Move :: moveTo(coordToStr(col, row), coordToStr(i, j));
             if (type) {
                 if (isCheck(*(Bot::createModifiedTable(m, currentTable)), i, j) == false)
-                    Q.push(m);
+                    return m;
             } else {
                 if (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false)
-                    Q.push(m);
+                    return m;
+            }
+        }
+    return NULL;
+}
+
+/* Check possible move for PAAAWN - NOT SIGMA PIECE */
+void Bot::checkPawnMoves(int8_t col, int8_t row) {
+    int8_t nextRow, nextNextRow, firstRow;
+
+    switch ((int8_t)(currentTable[col][row].color)) {
+        case BLACK:
+            nextRow = row - 1;
+            nextNextRow = row - 2;
+            firstRow = 7;
+            break;
+
+        case WHITE:
+            nextRow = row + 1;
+            nextNextRow = row + 2;
+            firstRow = 2;
+            break;
+        default:
+            f << "aratura\n";
+            exit(-69);
+    }
+
+    Move *m;
+
+    /* just one basic step ahead */
+    if (betweenBorders(col, nextRow) && currentTable[col][nextRow].type == EMPTY) {
+        m = checkPosition(col, row, col, nextRow);
+        if (m != NULL && (nextRow == 1 || nextRow == 8)) {
+            Q.push(Move::promote(m->getSource(), m->getDestination(), QUEEN));
+            Q.push(Move::promote(m->getSource(), m->getDestination(), KNIGHT));
+        } else add(m);
+        /* 2 steps ahead OF YOU*/
+        if (row == firstRow && betweenBorders(col, nextNextRow) &&
+            currentTable[col][nextNextRow].type == EMPTY)
+            add(checkPosition(col, row, col, nextNextRow));
+    }
+
+    for (int i = -1; i <= 1; i+=2) // left and right diagonal
+        if (betweenBorders(col - i, nextRow)) {
+            if ((currentTable[col - i][nextRow].type != EMPTY &&
+                 currentTable[col - i][nextRow].color != getSideToMove()) ||
+                (currentTable[col - i][nextRow].type == EMPTY &&
+                 currentTable[col - i][row].enPassantEligible)) {
+                    m = checkPosition(col, row, col - i, nextRow);
+                    if (m != NULL && (nextRow == 1 || nextRow == 8)) {
+                        Q.push(Move::promote(m->getSource(), m->getDestination(), QUEEN));
+                        Q.push(Move::promote(m->getSource(), m->getDestination(), KNIGHT));
+                    } else add(m);
             }
         }
 }
@@ -31,25 +88,25 @@ void Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type = 
 /* Check possible moves for BISHOP */
 void Bot::checkBishopMoves(int8_t col, int8_t row) {
     for (int i = col + 1, j = row + 1; betweenBorders(i ,j); ++i, ++j) { // up right
-        checkPosition(col, row, i, j);
+        add(checkPosition(col, row, i, j));
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col + 1, j = row - 1; betweenBorders(i ,j); ++i, --j) { // down right
-        checkPosition(col, row, i, j);
+        add(checkPosition(col, row, i, j));
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col - 1, j = row + 1; betweenBorders(i ,j); --i, ++j) { // up left
-        checkPosition(col, row, i, j);
+        add(checkPosition(col, row, i, j));
         if (currentTable[i][j].type != EMPTY)
             break;
     }
 
     for (int i = col - 1, j = row - 1; betweenBorders(i ,j); --i, --j) { // down left
-        checkPosition(col, row, i, j);
+        add(checkPosition(col, row, i, j));
         if (currentTable[i][j].type != EMPTY)
             break;
     }
@@ -123,7 +180,7 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(i, row));
             check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
 
-            /* If we can move to a position, we'll */
+            /* If we can move to a position, we'll add it to queue */
             if (check)
                 Q.push(m);
         } else if (!empty && !canCapture) {

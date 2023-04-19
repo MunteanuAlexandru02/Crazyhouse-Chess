@@ -192,6 +192,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
     }
   } else if (move->isDropIn()) {
     *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
+    pieceDest->moved = true;
     captured[sideToMove][pieceDest->type]--;
   }
 
@@ -220,7 +221,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
     }
   }
 
-  printTable();
+  printTable(table);
 }
 
 Move* Bot::calculateNextMove() {
@@ -253,7 +254,7 @@ Move* Bot::calculateNextMove() {
       if (currentTable[i][j].color == getSideToMove()) {
           switch (currentTable[i][j].type) {
           case PAWN:
-
+            Bot::checkPawnMoves(i, j);
             break;
           case KNIGHT:
             Bot::checkKnightMoves(i, j);
