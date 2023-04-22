@@ -288,6 +288,13 @@ Move* Bot::calculateNextMove() {
     Q.pop();
   }
   f << '\n';
+  /* check if the king was moved - update kingPos */
+  if (getCol(*(m1->getSource())) == kingPos[getSideToMove()].first &&
+        getRow(*(m1->getSource())) == kingPos[getSideToMove()].second) {
+          kingPos[getSideToMove()].first = getCol(*(m1->getDestination()));
+          kingPos[getSideToMove()].second = getRow(*(m1->getDestination()));
+        }
+
   recordMove(m1, getSideToMove());
   return m1;
 }

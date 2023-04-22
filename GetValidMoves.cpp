@@ -234,7 +234,6 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
     for (int i = row - 1; i >= 1; i--) {
         empty = (currentTable[col][i].type == EMPTY);
         canCapture = (currentTable[col][i].color != getSideToMove()); 
-        f << "in rook\n";
 
         if (empty || canCapture) {
             Move* m = Move::moveTo(coordToStr(col, row), coordToStr(col, i));
