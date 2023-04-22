@@ -264,16 +264,7 @@ Move* Bot::calculateNextMove() {
             Bot::checkBishopMoves(i, j);
             break;
           case KING:
-            checkPosition(i, j, i + 1, j + 1, true);
-            checkPosition(i, j, i + 1, j - 1, true);
-            checkPosition(i, j, i - 1, j + 1, true);
-            checkPosition(i, j, i - 1, j - 1, true);
-
-            checkPosition(i, j, i, j + 1, true);
-            checkPosition(i, j, i, j - 1, true);
-            checkPosition(i, j, i - 1, j, true);
-            checkPosition(i, j, i + 1, j, true);
-
+            Bot::checkKingMoves(i, j);
             break;
           case ROOK:
             Bot::checkRookMoves(i, j);

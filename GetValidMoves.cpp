@@ -20,7 +20,7 @@ void Bot::add(Move *m) {
 }
 
 Move* Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type = false) {
-    if (betweenBorders(i, j))
+    if (betweenBorders(i, j)) {
         if (currentTable[i][j].type == EMPTY || currentTable[i][j].color != getSideToMove()) {
             Move* m = Move :: moveTo(coordToStr(col, row), coordToStr(i, j));
             if (type) {
@@ -31,7 +31,17 @@ Move* Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type =
                     return m;
             }
         }
+    }
     return NULL;
+}
+
+void Bot::checkKingMoves(int8_t col, int8_t row) {
+    int offset_x[8] = {1, 1, -1, -1, 0, 0, -1, 1};
+    int offset_y[8] = {1, -1, 1, -1, 1, -1, 0, 0};
+    int i;
+    for (i = 0; i < 8; i++) {
+        add(checkPosition(col, row, col + offset_x[i], row + offset_y[i], true));
+    }
 }
 
 /* Check possible move for PAAAWN - NOT SIGMA PIECE */

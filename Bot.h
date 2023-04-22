@@ -80,6 +80,7 @@ class Bot {
   void checkBishopMoves(int8_t col, int8_t row);
   void checkKnightMoves(int8_t col, int8_t row);
   void checkRookMoves(int8_t col, int8_t row);
+  void checkKingMoves(int8_t col, int8_t row);
   bool isCheck(Table crtTable);
   bool isCheck(Table crtTable, int8_t king_x, int8_t king_y);
 
