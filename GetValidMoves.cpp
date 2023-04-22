@@ -193,7 +193,8 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
             /* If we can move to a position, we'll add it to queue */
             if (check)
                 Q.push(m);
-        } else if (!empty && !canCapture) {
+        }
+        if ((!empty && !canCapture) || canCapture) {
             break;
         }
     }
@@ -209,7 +210,8 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
 
             if (check)
                 Q.push(m);
-        } else if (!empty && !canCapture) {
+        }
+        if ((!empty && !canCapture) || canCapture) {
             break;
         }
     }
@@ -225,7 +227,8 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
 
             if (check)
                 Q.push(m);
-        } else if (!empty && !canCapture) {
+        }
+        if ((!empty && !canCapture) || canCapture) {
             break;
         }
     }
@@ -240,7 +243,8 @@ void Bot::checkRookMoves(int8_t col, int8_t row) {
             check = (isCheck(*(Bot::createModifiedTable(m, currentTable))) == false);
             if (check)
                 Q.push(m);
-        } else if (!empty && !canCapture) {
+        }
+        if ((!empty && !canCapture) || canCapture) {
             break;
         }
     }

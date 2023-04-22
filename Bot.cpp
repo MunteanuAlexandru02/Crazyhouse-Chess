@@ -280,14 +280,31 @@ Move* Bot::calculateNextMove() {
     }
   }
 
+  /* shit random number getter */
+  srand(time(0));
   Move *m1 = Q.front();
+  Q.pop();
+  Q.push(m1);
+  int count = 1;
+  while (Q.front() != m1) {
+    Move *m = Q.front();
+    Q.pop();
+    Q.push(m);
+    count++;
+  }
+  int move_index = (rand() % count); 
+  count = 0;
 
   while (!Q.empty()) {
     Move *m = Q.front();
+    if (count == move_index) 
+      m1 = m;
+    count++;
     f << m->source.value() << "->" << m->destination.value() << ", ";
     Q.pop();
   }
   f << '\n';
+
   /* check if the king was moved - update kingPos */
   if (getCol(*(m1->getSource())) == kingPos[getSideToMove()].first &&
         getRow(*(m1->getSource())) == kingPos[getSideToMove()].second) {
