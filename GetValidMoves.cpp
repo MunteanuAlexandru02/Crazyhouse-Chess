@@ -40,7 +40,15 @@ void Bot::checkKingMoves(int8_t col, int8_t row) {
     int offset_y[8] = {1, -1, 1, -1, 1, -1, 0, 0};
     int i;
     for (i = 0; i < 8; i++) {
-        add(checkPosition(col, row, col + offset_x[i], row + offset_y[i], true));
+        Move *m = checkPosition(col, row, col + offset_x[i], row + offset_y[i], true);
+
+        if (m != NULL) {
+            f<<abs(col + offset_x[i] - kingPos[1 ^ getSideToMove()].first)<<'\n';
+            f << "xor "<< (1 ^ getSideToMove()) <<'\n';
+            if (!((abs(col + offset_x[i] - kingPos[1 ^ getSideToMove()].first) <= 1) &&
+                (abs(row + offset_y[i] - kingPos[1 ^ getSideToMove()].second) <= 1))) 
+                add(m);
+        }
     }
 }
 
