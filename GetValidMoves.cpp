@@ -35,21 +35,37 @@ Move* Bot::checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool type =
     return NULL;
 }
 
-void Bot::checkKingMoves(int8_t col, int8_t row) {
-    int offset_x[8] = {1, 1, -1, -1, 0, 0, -1, 1};
-    int offset_y[8] = {1, -1, 1, -1, 1, -1, 0, 0};
+bool Bot::checkKingMoves(int8_t col, int8_t row) {
+    int offset_x[8] = { 1,  1, -1, -1,  0,  0, -1,  1};
+    int offset_y[8] = { 1, -1,  1, -1,  1, -1,  0,  0};
     int i;
-    for (i = 0; i < 8; i++) {
-        Move *m = checkPosition(col, row, col + offset_x[i], row + offset_y[i], true);
 
-        if (m != NULL) {
-            f<<abs(col + offset_x[i] - kingPos[1 ^ getSideToMove()].first)<<'\n';
-            f << "xor "<< (1 ^ getSideToMove()) <<'\n';
-            if (!((abs(col + offset_x[i] - kingPos[1 ^ getSideToMove()].first) <= 1) &&
-                (abs(row + offset_y[i] - kingPos[1 ^ getSideToMove()].second) <= 1))) 
-                add(m);
+    if (currentTable[col][row].moved == false) {
+        if (currentTable[A][row].type == ROOK && currentTable[A][row].moved == false) {// rocada mare
+            if (currentTable[B][row].type==EMPTY &&
+                currentTable[C][row].type==EMPTY && currentTable[D][row].type==EMPTY) {
+                Move *m = checkPosition(col, row, col - 2, row, true);
+                if (checkPosition(col, row, col - 3, row, true) &&
+                    checkPosition(col, row, col - 1, row, true) && m) {
+                        add(m);
+                        return true; // se forteaza rocada
+                    }
+            }
+        } else if (currentTable[H][row].type == ROOK && currentTable[H][row].moved == false) { // rocada mica
+            if (currentTable[F][row].type==EMPTY && currentTable[G][row].type==EMPTY) {
+                Move *m = checkPosition(col, row, col - 2, row, true);
+                if (checkPosition(col, row, col - 1, row, true) && m) {
+                        add(m);
+                        return true; // se forteaza rocada
+                    }
+            }
         }
     }
+
+    for (i = 0; i < 8; i++)
+        add(checkPosition(col, row, col + offset_x[i], row + offset_y[i], true));
+
+    return false; // nu se forteaza rocada
 }
 
 /* Check possible move for PAAAWN - NOT SIGMA PIECE */
@@ -271,8 +287,8 @@ bool Bot::isCheck (Table crtTable, int8_t king_x, int8_t king_y) {
     int8_t x, y;
 
     /* check for knights */
-    int offset_x[8] = {-2, -1, 1, 2, 2, 1, -1, -2};
-    int offset_y[8] = {1, 2, 2, 1, -1, -2, -2, -1};
+    int offset_x[8] = {-2, -1,  1,  2,  2,  1, -1, -2};
+    int offset_y[8] = { 1,  2,  2,  1, -1, -2, -2, -1};
 
     int i;
     for (i = 0; i < 8; i++) {
@@ -370,6 +386,11 @@ bool Bot::isCheck (Table crtTable, int8_t king_x, int8_t king_y) {
             y = y + offset_y_rq[i];
         }
     }
+
+    /* check for other king */
+    if ((abs(king_x - kingPos[1 ^ getSideToMove()].first) <= 1) &&
+        (abs(king_y - kingPos[1 ^ getSideToMove()].second) <= 1))
+            return true;
 
     return false;
 }

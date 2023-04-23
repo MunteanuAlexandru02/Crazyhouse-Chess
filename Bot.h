@@ -59,7 +59,7 @@ class Bot {
    */
 
   void recordMove(Move* move, PlaySide sideToMove);
-  void recordMove(Move* move, PlaySide sideToMove, Table *table);
+  void recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing = true);
 
   Table *createModifiedTable(Move* move, Table table);
 
@@ -80,7 +80,7 @@ class Bot {
   void checkBishopMoves(int8_t col, int8_t row);
   void checkKnightMoves(int8_t col, int8_t row);
   void checkRookMoves(int8_t col, int8_t row);
-  void checkKingMoves(int8_t col, int8_t row);
+  bool checkKingMoves(int8_t col, int8_t row);
   bool isCheck(Table crtTable);
   bool isCheck(Table crtTable, int8_t king_x, int8_t king_y);
 

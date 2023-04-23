@@ -111,7 +111,7 @@ Bot::Bot() {
 Table* Bot::createModifiedTable(Move* move, Table table) {
   Table *ret = new Table;
   *ret = table; 
-  Bot::recordMove(move, getSideToMove(), ret);
+  Bot::recordMove(move, getSideToMove(), ret, false);
   return ret;
 }
 
@@ -119,7 +119,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
   recordMove(move, sideToMove, &currentTable);
 }
 
-void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
+void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing) {
   /* You might find it useful to also separately
     * record last move in another custom field */
   f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
@@ -147,7 +147,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
     if (move->isPromotion()) {
       pieceDest->type = *(move->getReplacement());
       pieceDest->promoted = true;
-    } else if (pieceDest->type == KING) {  // testare rocada
+    } else if (pieceDest->type == KING) {  // testare rocada + actualizare kingPos
       int8_t kingRow;
       switch(sideToMove) {
         case BLACK:
@@ -171,6 +171,12 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table) {
           (*table)[D][kingRow].moved = true;
           (*table)[A][kingRow].type = EMPTY;
         }
+      }
+
+      /* Update kingPos */
+      if (updateKing) {
+        kingPos[sideToMove].first = getCol(dest);
+        kingPos[sideToMove].second = getRow(dest);
       }
     } else if (pieceDest->type == PAWN) {  // testare En Passant
       PieceData *pieceBehind;
@@ -248,9 +254,10 @@ Move* Bot::calculateNextMove() {
   // }
 
   // fflush(stdout);
+  bool rocade = false;
 
-  for (int i = A; i <= H; ++i) {
-    for (int j = 1; j <= 8; ++j) {
+  for (int i = A; i <= H && !rocade; ++i) {
+    for (int j = 1; j <= 8 && !rocade; ++j) {
       if (currentTable[i][j].color == getSideToMove()) {
           switch (currentTable[i][j].type) {
           case PAWN:
@@ -260,11 +267,10 @@ Move* Bot::calculateNextMove() {
             Bot::checkKnightMoves(i, j);
             break;
           case QUEEN:
-            Bot::checkRookMoves(i, j);
             Bot::checkBishopMoves(i, j);
             break;
           case KING:
-            Bot::checkKingMoves(i, j);
+            rocade = Bot::checkKingMoves(i, j);
             break;
           case ROOK:
             Bot::checkRookMoves(i, j);
@@ -276,6 +282,15 @@ Move* Bot::calculateNextMove() {
           
             continue;
         };
+        if (rocade) {// force rocade
+          Move *m;
+          while (!Q.empty()) {
+            m = Q.front();
+            Q.pop();
+          }
+          Q.push(m);
+          break;
+        }
       }
     }
   }
@@ -305,12 +320,12 @@ Move* Bot::calculateNextMove() {
   }
   f << '\n';
 
-  /* check if the king was moved - update kingPos */
-  if (getCol(*(m1->getSource())) == kingPos[getSideToMove()].first &&
-        getRow(*(m1->getSource())) == kingPos[getSideToMove()].second) {
-          kingPos[getSideToMove()].first = getCol(*(m1->getDestination()));
-          kingPos[getSideToMove()].second = getRow(*(m1->getDestination()));
-        }
+  // /* check if the king was moved - update kingPos */
+  // if (getCol(*(m1->getSource())) == kingPos[getSideToMove()].first &&
+  //       getRow(*(m1->getSource())) == kingPos[getSideToMove()].second) {
+  //         kingPos[getSideToMove()].first = getCol(*(m1->getDestination()));
+  //         kingPos[getSideToMove()].second = getRow(*(m1->getDestination()));
+  //       }
 
   recordMove(m1, getSideToMove());
   return m1;
