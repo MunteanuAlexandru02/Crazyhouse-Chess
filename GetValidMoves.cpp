@@ -40,7 +40,7 @@ bool Bot::checkKingMoves(int8_t col, int8_t row) {
     int offset_y[8] = { 1, -1,  1, -1,  1, -1,  0,  0};
     int i;
 
-    if (currentTable[col][row].moved == false) {
+    if (currentTable[col][row].moved == false && !isCheck(currentTable)) {
         if (currentTable[A][row].type == ROOK && currentTable[A][row].moved == false) {// rocada mare
             if (currentTable[B][row].type==EMPTY &&
                 currentTable[C][row].type==EMPTY && currentTable[D][row].type==EMPTY) {
@@ -51,10 +51,11 @@ bool Bot::checkKingMoves(int8_t col, int8_t row) {
                         return true; // se forteaza rocada
                     }
             }
-        } else if (currentTable[H][row].type == ROOK && currentTable[H][row].moved == false) { // rocada mica
+        }
+        if (currentTable[H][row].type == ROOK && currentTable[H][row].moved == false && !isCheck(currentTable)) { // rocada mica
             if (currentTable[F][row].type==EMPTY && currentTable[G][row].type==EMPTY) {
-                Move *m = checkPosition(col, row, col - 2, row, true);
-                if (checkPosition(col, row, col - 1, row, true) && m) {
+                Move *m = checkPosition(col, row, col + 2, row, true);
+                if (checkPosition(col, row, col + 1, row, true) && m) {
                         add(m);
                         return true; // se forteaza rocada
                     }
