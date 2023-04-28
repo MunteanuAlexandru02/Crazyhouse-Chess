@@ -5,6 +5,7 @@
 
 // std::ofstream f("myLog.txt");
 extern std :: ofstream f;
+extern std::string serializeMove(Move *m);
 
 
 const std::string Bot::BOT_NAME = "El_Prostovano"; /* Edit this, escaped characters are forbidden */
@@ -69,6 +70,7 @@ void Bot::printTable(Table *table) {
 }
 
 Bot::Bot() {
+  srand(time(0));
   f << "Before constructing table\n\n";
   currentTable = std :: vector(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
   //f << "After constructing table\n\n";
@@ -128,7 +130,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
   PieceData *pieceDest = &((*table)[getCol(dest)][getRow(dest)]);
 
-  if (pieceDest->type != EMPTY) {
+  if (pieceDest->type != EMPTY && updateKing) {
     if (pieceDest->promoted == true) {
       captured[sideToMove][PAWN]++;
     } else {
@@ -192,14 +194,16 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
       }
 
       if (pieceBehind->enPassantEligible == true && pieceBehind->color != sideToMove) {
-        captured[sideToMove][PAWN]++;
+        if (updateKing)
+          captured[sideToMove][PAWN]++;
         pieceBehind->type = EMPTY;
       }
     }
   } else if (move->isDropIn()) {
     *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
     pieceDest->moved = true;
-    captured[sideToMove][pieceDest->type]--;
+    if (updateKing)
+      captured[sideToMove][pieceDest->type]--;
   }
 
   for (int i = A; i <= H; ++i)
@@ -258,7 +262,7 @@ Move* Bot::calculateNextMove() {
 
   for (int i = A; i <= H && !rocade; ++i) {
     for (int j = 1; j <= 8 && !rocade; ++j) {
-      if (currentTable[i][j].color == getSideToMove()) {
+      if (currentTable[i][j].color == getSideToMove() && currentTable[i][j].type != EMPTY) {
           switch (currentTable[i][j].type) {
           case PAWN:
             Bot::checkPawnMoves(i, j);
@@ -268,6 +272,7 @@ Move* Bot::calculateNextMove() {
             break;
           case QUEEN:
             Bot::checkBishopMoves(i, j);
+            Bot::checkRookMoves(i, j);
             break;
           case KING:
             rocade = Bot::checkKingMoves(i, j);
@@ -279,7 +284,6 @@ Move* Bot::calculateNextMove() {
             Bot::checkBishopMoves(i, j);
             break;
           default:
-          
             continue;
         };
         if (rocade) {// force rocade
@@ -291,12 +295,18 @@ Move* Bot::calculateNextMove() {
           Q.push(m);
           break;
         }
+      } else if (currentTable[i][j].type == EMPTY) {
+          for (int p = PAWN; p <= QUEEN; ++p)
+              if (captured[getSideToMove()][p] != 0)
+                add(checkDropIn(i, j, (enum Piece)p));
       }
     }
   }
 
   /* shit random number getter */
-  srand(time(0));
+  if (Q.empty()) {
+    return Move::resign();
+  }
   Move *m1 = Q.front();
   Q.pop();
   Q.push(m1);
@@ -315,7 +325,7 @@ Move* Bot::calculateNextMove() {
     if (count == move_index) 
       m1 = m;
     count++;
-    f << m->source.value() << "->" << m->destination.value() << ", ";
+    f << serializeMove(m) << ", ";
     Q.pop();
   }
   f << '\n';
@@ -326,6 +336,16 @@ Move* Bot::calculateNextMove() {
   //         kingPos[getSideToMove()].first = getCol(*(m1->getDestination()));
   //         kingPos[getSideToMove()].second = getRow(*(m1->getDestination()));
   //       }
+
+  f << "------------\nCaptured:\n";
+  for (int i = BLACK; i <= WHITE; ++i) {
+    f << (enum Piece)i <<" - ";
+    for (int p = PAWN; p <= QUEEN; ++p)
+      f << (int)(captured[i][p]) << ' ';
+    
+    f << '\n';
+
+  }
 
   recordMove(m1, getSideToMove());
   return m1;

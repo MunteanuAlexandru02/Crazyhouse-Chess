@@ -44,11 +44,7 @@ static std::string constructFeaturesPayload() {
   return payload.str();
 }
 
-static std::string serializeMove(Move* move) {
-
-  f << "in serializeMove function...\n";
-  fflush(stdout);
-
+std::string serializeMove(Move* move) {
   if (move->isNormal())
     return move->getSource().value() + move->getDestination().value();
   else if (move->isPromotion()) {

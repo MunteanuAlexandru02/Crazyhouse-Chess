@@ -4,4 +4,6 @@ Main
 myLog.txt
 xboard.*
 .gdb_history
-student*.pgn
+*.pgn
+*.fen
+testare*
