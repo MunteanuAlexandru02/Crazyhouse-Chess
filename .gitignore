@@ -1,0 +1,9 @@
+*.[oa]
+*.d
+Main
+myLog.txt
+xboard.*
+.gdb_history
+*.pgn
+*.fen
+testare*

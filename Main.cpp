@@ -12,7 +12,8 @@
 static PlaySide sideToMove;
 static PlaySide engineSide;
 
-extern std :: ofstream f;
+//extern std :: ofstream f;
+std::ofstream f("myLog.txt");
 
 static void toggleSideToMove() {
     static const PlaySide switchTable[] = {
@@ -43,11 +44,7 @@ static std::string constructFeaturesPayload() {
   return payload.str();
 }
 
-static std::string serializeMove(Move* move) {
-
-  f << "in serializeMove function...\n";
-  fflush(stdout);
-
+std::string serializeMove(Move* move) {
   if (move->isNormal())
     return move->getSource().value() + move->getDestination().value();
   else if (move->isPromotion()) {
