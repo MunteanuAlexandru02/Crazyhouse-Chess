@@ -240,24 +240,6 @@ Move* Bot::calculateNextMove() {
    *
    * Return move that you are willing to submit
    * Move is to be constructed via one of the factory methods declared in Move.h */
-
-  //f << "in calculateNextMove function...\n";
-
-  // if (getEngineSide() == getSideToMove()) {
-    
-  //   //f << "engine side == side to move\n";
-  //   fflush(stdout);
-
-  //   if (getEngineSide() == WHITE) {
-  //     return Move::moveTo("a2", "a4");
-  //   } else {
-  //     return Move::moveTo("h7", "h5");
-  //   }
-  // } else {
-  //   //f << "Wtf happened here? (engine side != side to move)\n";
-  // }
-
-  // fflush(stdout);
   bool rocade = false;
 
   for (int i = A; i <= H && !rocade; ++i) {
