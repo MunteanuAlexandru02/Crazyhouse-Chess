@@ -73,6 +73,8 @@ Bot::Bot() {
   srand(time(0));
   f << "Before constructing table\n\n";
   currentTable = std :: vector(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
+  Q = std :: queue<Move*>();
+  queueCount = 0;
   //f << "After constructing table\n\n";
 
   /* Add pawns */
@@ -121,7 +123,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
   recordMove(move, sideToMove, &currentTable);
 }
 
-void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing) {
+void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateAux) {
   /* You might find it useful to also separately
     * record last move in another custom field */
   f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
@@ -130,7 +132,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
   PieceData *pieceDest = &((*table)[getCol(dest)][getRow(dest)]);
 
-  if (pieceDest->type != EMPTY && updateKing) {
+  if (pieceDest->type != EMPTY && updateAux) {
     if (pieceDest->promoted == true) {
       captured[sideToMove][PAWN]++;
     } else {
@@ -176,7 +178,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
       }
 
       /* Update kingPos */
-      if (updateKing) {
+      if (updateAux) {
         kingPos[sideToMove].first = getCol(dest);
         kingPos[sideToMove].second = getRow(dest);
       }
@@ -194,7 +196,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
       }
 
       if (pieceBehind->enPassantEligible == true && pieceBehind->color != sideToMove) {
-        if (updateKing)
+        if (updateAux)
           captured[sideToMove][PAWN]++;
         pieceBehind->type = EMPTY;
       }
@@ -202,7 +204,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
   } else if (move->isDropIn()) {
     *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
     pieceDest->moved = true;
-    if (updateKing)
+    if (updateAux)
       captured[sideToMove][pieceDest->type]--;
   }
 
@@ -241,6 +243,7 @@ Move* Bot::calculateNextMove() {
    * Return move that you are willing to submit
    * Move is to be constructed via one of the factory methods declared in Move.h */
   bool rocade = false;
+  queueCount = 0;
 
   for (int i = A; i <= H && !rocade; ++i) {
     for (int j = 1; j <= 8 && !rocade; ++j) {
@@ -269,12 +272,14 @@ Move* Bot::calculateNextMove() {
             continue;
         };
         if (rocade) {// force rocade
-          Move *m;
+          Move *m = NULL;
           while (!Q.empty()) {
+            delete m;
             m = Q.front();
             Q.pop();
           }
           Q.push(m);
+          queueCount = 1;
           break;
         }
       } else if (currentTable[i][j].type == EMPTY) {
@@ -289,18 +294,9 @@ Move* Bot::calculateNextMove() {
   if (Q.empty()) {
     return Move::resign();
   }
-  Move *m1 = Q.front();
-  Q.pop();
-  Q.push(m1);
-  int count = 1;
-  while (Q.front() != m1) {
-    Move *m = Q.front();
-    Q.pop();
-    Q.push(m);
-    count++;
-  }
-  int move_index = (rand() % count); 
-  count = 0;
+  Move *m1;
+  int move_index = (rand() % queueCount); 
+  int count = 0;
 
   while (!Q.empty()) {
     Move *m = Q.front();
@@ -328,6 +324,8 @@ Move* Bot::calculateNextMove() {
     f << '\n';
 
   }
+
+  f << "------------\nChosen move: " << serializeMove(m1) << '\n';
 
   recordMove(m1, getSideToMove());
   return m1;

@@ -9,7 +9,6 @@
 
 extern enum PlaySide getEngineSide();
 extern enum PlaySide getSideToMove();
-extern std::queue<Move*> Q;
 
 enum Column { Z, A, B, C, D, E ,F, G, H };
 
@@ -43,6 +42,8 @@ class Bot {
 
  public:
   /* Declare custom fields below */
+  std::queue<Move*> Q;
+  int queueCount = 0;
 
   Table currentTable;
   int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
@@ -59,7 +60,7 @@ class Bot {
    */
 
   void recordMove(Move* move, PlaySide sideToMove);
-  void recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing = true);
+  void recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateAux = true);
 
   Table *createModifiedTable(Move* move, Table table);
 
