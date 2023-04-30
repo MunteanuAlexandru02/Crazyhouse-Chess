@@ -9,9 +9,8 @@
 
 extern enum PlaySide getEngineSide();
 extern enum PlaySide getSideToMove();
-extern std::queue<Move*> Q;
 
-enum Column { Z, A, B, C, D, E ,F, G, H };
+enum Column {Z, A, B, C, D, E ,F, G, H};
 
 std::optional<std::string> coordToStr(int8_t x, int8_t y);
 
@@ -20,7 +19,7 @@ struct PieceData {
   bool color = BLACK;
   bool promoted = false;
   bool moved = false;
-  bool enPassantEligible = false;  // for En Passant, eventually
+  bool enPassantEligible = false;  // for En Passant
 
   PieceData(enum Piece argtype, bool argcolor, bool argpromoted):
     type(argtype), color(argcolor), promoted(argpromoted)
@@ -35,7 +34,7 @@ struct PieceData {
   {}
 };
 
-typedef std :: vector <std :: vector <PieceData> > Table;
+typedef std::vector <std::vector <PieceData> > Table;
 
 class Bot {
  private:
@@ -43,10 +42,12 @@ class Bot {
 
  public:
   /* Declare custom fields below */
+  std::queue<Move*> Q;
+  int queueCount = 0;
 
   Table currentTable;
   int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
-  std :: vector <std :: pair <int8_t, int8_t> > kingPos;
+  std::vector <std::pair <int8_t, int8_t> > kingPos;
 
   /* Declare custom fields above */
   Bot();
@@ -59,7 +60,8 @@ class Bot {
    */
 
   void recordMove(Move* move, PlaySide sideToMove);
-  void recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing = true);
+  void recordMove(Move* move, PlaySide sideToMove,
+                  Table *table, bool updateAux = true);
 
   Table *createModifiedTable(Move* move, Table table);
 

@@ -6,4 +6,5 @@ xboard.*
 .gdb_history
 *.pgn
 *.fen
+*.zip.1
 testare*

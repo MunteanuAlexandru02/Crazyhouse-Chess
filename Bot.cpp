@@ -3,14 +3,12 @@
 
 #include <bits/stdc++.h>
 
-// std::ofstream f("myLog.txt");
-extern std :: ofstream f;
+extern std::ofstream f;
 extern std::string serializeMove(Move *m);
 
+const std::string Bot::BOT_NAME = "The_Escapists";
 
-const std::string Bot::BOT_NAME = "El_Prostovano"; /* Edit this, escaped characters are forbidden */
-
-std :: vector <std :: pair<int8_t, int8_t>> kingPos(2);
+std::vector <std::pair<int8_t, int8_t>> kingPos(2);
 
 enum Column getCol(std::__cxx11::basic_string<char> s) {
   return (enum Column)(s.at(0) - 'a' + 1);
@@ -33,36 +31,16 @@ void Bot::printTable() {
   printTable(&currentTable);
 }
 void Bot::printTable(Table *table) {
+  char pieceChar[] = "PRBNQK ";
   for (int i = A; i <= H; ++i) {
     f << '|';
-
     for (int j = 1; j <= 8; ++j) {
-      char ch;
-      switch ((*table)[i][j].type) {
-        case PAWN:
-          ch = 'P';
-          break;
-        case KNIGHT:
-          ch = 'N';
-          break;
-        case QUEEN:
-          ch = 'Q';
-          break;
-        case KING:
-          ch = 'K';
-          break;
-        case ROOK:
-          ch = 'R';
-          break;
-        case BISHOP:
-          ch = 'B';
-          break;
-        default:
-          ch = ch;
+      if ((*table)[i][j].type == EMPTY) {
           f << "  |";
           continue;
       };
-      f << ch << ((*table)[i][j].color?'w':'b') << '|';
+      f << pieceChar[(int)((*table)[i][j].type)]
+        << ((*table)[i][j].color?'w':'b') << '|';
     }
     f << '\n';
   }
@@ -72,8 +50,9 @@ void Bot::printTable(Table *table) {
 Bot::Bot() {
   srand(time(0));
   f << "Before constructing table\n\n";
-  currentTable = std :: vector(N + 1, std :: vector <PieceData>(N + 1, PieceData()));
-  //f << "After constructing table\n\n";
+  currentTable = std::vector(N + 1, std::vector <PieceData>(N + 1, PieceData()));
+  Q = std::queue<Move*>();
+  queueCount = 0;
 
   /* Add pawns */
   for (int i = A; i <= H; ++i) {
@@ -103,8 +82,8 @@ Bot::Bot() {
   /* Add Kings */
   currentTable[E][8] = PieceData(KING, BLACK);
   currentTable[E][1] = PieceData(KING, WHITE);
-  kingPos.push_back(std :: pair<int8_t, int8_t>(E, 8));
-  kingPos.push_back(std :: pair<int8_t, int8_t>(E, 1));
+  kingPos.push_back(std::pair<int8_t, int8_t>(E, 8));
+  kingPos.push_back(std::pair<int8_t, int8_t>(E, 1));
 
   f << "Initial table:\n";
   printTable();
@@ -121,7 +100,8 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
   recordMove(move, sideToMove, &currentTable);
 }
 
-void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateKing) {
+void Bot::recordMove(Move* move, PlaySide sideToMove,
+                     Table *table, bool updateAux) {
   /* You might find it useful to also separately
     * record last move in another custom field */
   f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
@@ -130,7 +110,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
   PieceData *pieceDest = &((*table)[getCol(dest)][getRow(dest)]);
 
-  if (pieceDest->type != EMPTY && updateKing) {
+  if (pieceDest->type != EMPTY && updateAux) {
     if (pieceDest->promoted == true) {
       captured[sideToMove][PAWN]++;
     } else {
@@ -176,7 +156,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
       }
 
       /* Update kingPos */
-      if (updateKing) {
+      if (updateAux) {
         kingPos[sideToMove].first = getCol(dest);
         kingPos[sideToMove].second = getRow(dest);
       }
@@ -194,7 +174,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
       }
 
       if (pieceBehind->enPassantEligible == true && pieceBehind->color != sideToMove) {
-        if (updateKing)
+        if (updateAux)
           captured[sideToMove][PAWN]++;
         pieceBehind->type = EMPTY;
       }
@@ -202,7 +182,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove, Table *table, bool updateK
   } else if (move->isDropIn()) {
     *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
     pieceDest->moved = true;
-    if (updateKing)
+    if (updateAux)
       captured[sideToMove][pieceDest->type]--;
   }
 
@@ -240,30 +220,14 @@ Move* Bot::calculateNextMove() {
    *
    * Return move that you are willing to submit
    * Move is to be constructed via one of the factory methods declared in Move.h */
-
-  //f << "in calculateNextMove function...\n";
-
-  // if (getEngineSide() == getSideToMove()) {
-    
-  //   //f << "engine side == side to move\n";
-  //   fflush(stdout);
-
-  //   if (getEngineSide() == WHITE) {
-  //     return Move::moveTo("a2", "a4");
-  //   } else {
-  //     return Move::moveTo("h7", "h5");
-  //   }
-  // } else {
-  //   //f << "Wtf happened here? (engine side != side to move)\n";
-  // }
-
-  // fflush(stdout);
   bool rocade = false;
+  queueCount = 0;
 
   for (int i = A; i <= H && !rocade; ++i) {
     for (int j = 1; j <= 8 && !rocade; ++j) {
-      if (currentTable[i][j].color == getSideToMove() && currentTable[i][j].type != EMPTY) {
-          switch (currentTable[i][j].type) {
+      if (currentTable[i][j].color == getSideToMove() &&
+          currentTable[i][j].type != EMPTY) {
+        switch (currentTable[i][j].type) {
           case PAWN:
             Bot::checkPawnMoves(i, j);
             break;
@@ -287,18 +251,20 @@ Move* Bot::calculateNextMove() {
             continue;
         };
         if (rocade) {// force rocade
-          Move *m;
+          Move *m = NULL;
           while (!Q.empty()) {
+            delete m;
             m = Q.front();
             Q.pop();
           }
           Q.push(m);
+          queueCount = 1;
           break;
         }
       } else if (currentTable[i][j].type == EMPTY) {
-          for (int p = PAWN; p <= QUEEN; ++p)
-              if (captured[getSideToMove()][p] != 0)
-                add(checkDropIn(i, j, (enum Piece)p));
+        for (int p = PAWN; p <= QUEEN; ++p)
+            if (captured[getSideToMove()][p] != 0)
+              add(checkDropIn(i, j, (enum Piece)p));
       }
     }
   }
@@ -307,18 +273,9 @@ Move* Bot::calculateNextMove() {
   if (Q.empty()) {
     return Move::resign();
   }
-  Move *m1 = Q.front();
-  Q.pop();
-  Q.push(m1);
-  int count = 1;
-  while (Q.front() != m1) {
-    Move *m = Q.front();
-    Q.pop();
-    Q.push(m);
-    count++;
-  }
-  int move_index = (rand() % count); 
-  count = 0;
+  Move *m1;
+  int move_index = (rand() % queueCount); 
+  int count = 0;
 
   while (!Q.empty()) {
     Move *m = Q.front();
@@ -328,24 +285,17 @@ Move* Bot::calculateNextMove() {
     f << serializeMove(m) << ", ";
     Q.pop();
   }
-  f << '\n';
 
-  // /* check if the king was moved - update kingPos */
-  // if (getCol(*(m1->getSource())) == kingPos[getSideToMove()].first &&
-  //       getRow(*(m1->getSource())) == kingPos[getSideToMove()].second) {
-  //         kingPos[getSideToMove()].first = getCol(*(m1->getDestination()));
-  //         kingPos[getSideToMove()].second = getRow(*(m1->getDestination()));
-  //       }
-
-  f << "------------\nCaptured:\n";
+  f << "\n------------\nCaptured:\n";
   for (int i = BLACK; i <= WHITE; ++i) {
     f << (enum Piece)i <<" - ";
     for (int p = PAWN; p <= QUEEN; ++p)
       f << (int)(captured[i][p]) << ' ';
     
     f << '\n';
-
   }
+
+  f << "------------\nChosen move: " << serializeMove(m1) << '\n';
 
   recordMove(m1, getSideToMove());
   return m1;
