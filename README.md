@@ -1,11 +1,10 @@
 # Crazyhouse Chess
 
-# Etapa 1:\
-un bot care este capabil sa joace un joc de sah complet, respectand toate\
+## Etapa 1:
+un bot care este capabil sa joace un joc de sah complet, respectand toate
 miscarile legale din jocul de Crazyhouse
 
 ## Echipa: The Escapists
-## Membri:
 	- Chiriac Cristian-Alexandru
 	- Mogodeanu Claudiu
 	- Munteanu Alexandru-Constantin
