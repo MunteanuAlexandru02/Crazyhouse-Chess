@@ -14,7 +14,7 @@ DEPS := $(OBJS:.o=.d)
 
 build: all
 
-run: all
+run:
 	./Main
 
 all: $(PRGM)
