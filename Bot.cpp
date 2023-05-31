@@ -1,9 +1,10 @@
 #include "Bot.h"
 #include "PlaySide.h"
 #include <bits/stdc++.h>
-#define MAX_DEPTH 3
-#define INF (INT32_MIN / 2)
 
+#define MAX_DEPTH 3
+#define INF (INT32_MAX / 2)
+#define CHECK_BONUS 5
 // enum Piece { PAWN = 0, ROOK = 1, BISHOP = 2, KNIGHT = 3, QUEEN = 4, KING = 5, EMPTY = 6 };
 int         values[] = { 1,  5,  3,  3,  9, 90,  0};
 int capturedValues[] = { 1,  5,  5, 10, 10, 90,  0}; // myVersion
@@ -233,11 +234,14 @@ Move* Bot::calculateNextMove() {
    * Move is to be constructed via one of the factory methods declared in Move.h */
   std::pair<Move*, int> p = Bot::calculateNextMove(&currentTable, getSideToMove(), 0);
 
+  if (p.first == NULL)
+    return Move::resign();
+
   recordMove(p.first, getSideToMove());
   return p.first;
 }
 
-std::pair<Move*, int> Bot::calculateNextMove(Table *tableStruc, bool sideToMove, int depth) {
+std::pair<Move*, int> Bot::calculateNextMove(Table *tableStruc, bool sideToMove, int depth, int alpha, int beta) {
   // bool rocade = false;
   // queueCount = 0;
   std::queue<Move*> Q;
@@ -326,7 +330,7 @@ std::pair<Move*, int> Bot::calculateNextMove(Table *tableStruc, bool sideToMove,
   // f << getSideToMove() << '\n';
 
 
-  std::pair<Move*, int> best = std::pair<Move*, int>(NULL, INT32_MIN);
+  std::pair<Move*, int> best = std::pair<Move*, int>(NULL, -INF);
 
   while (!Q.empty()) {
     Move *m = Q.front();
@@ -350,6 +354,10 @@ std::pair<Move*, int> Bot::calculateNextMove(Table *tableStruc, bool sideToMove,
   }
 
   currentSide = (enum PlaySide)(1 ^ sideToMove);
+
+  if (isCheck(*tableStruc, tableStruc->kingPos[1 ^ sideToMove].first, tableStruc->kingPos[1 ^ sideToMove].second))
+    best.second += CHECK_BONUS;
+
   return best;
 }
 
