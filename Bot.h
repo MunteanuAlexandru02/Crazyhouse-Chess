@@ -50,11 +50,10 @@ class Bot {
 
  public:
   /* Declare custom fields below */
-  std::queue<Move*> Q;
-  int queueCount = 0;
 
   Table currentTable;
   // int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+  enum PlaySide currentSide;
   // std::vector <std::pair <int8_t, int8_t> > kingPos;
 
   /* Declare custom fields above */
@@ -81,17 +80,19 @@ class Bot {
    * @return your move
    */
   Move* calculateNextMove();
+  std::pair<Move*, int> calculateNextMove(Table *tableStruc, bool sideToMove, int depth);
+  int heuristic(Table *tableStruc, bool sideToMove);
   void printTable();
   void printTable(Table *table);
 
-  void add(Move *m);
+  void add(Move *m, std::queue<Move*> &Q);
   Move* checkDropIn(Table *tableStruc, int8_t col, int8_t row, enum Piece p);
   Move* checkPosition(Table *tableStruc, int8_t col, int8_t row, int8_t i, int8_t j, bool king);
-  void checkPawnMoves(Table *tableStruc, int8_t col, int8_t row);
-  void checkBishopMoves(Table *tableStruc, int8_t col, int8_t row);
-  void checkKnightMoves(Table *tableStruc, int8_t col, int8_t row);
-  void checkRookMoves(Table *tableStruc, int8_t col, int8_t row);
-  bool checkKingMoves(Table *tableStruc, int8_t col, int8_t row);
+  void checkPawnMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q);
+  void checkBishopMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q);
+  void checkKnightMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q);
+  void checkRookMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q);
+  bool checkKingMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q);
   bool isCheck(Table crtTable);
   bool isCheck(Table crtTable, int8_t king_x, int8_t king_y);
 

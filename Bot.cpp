@@ -1,6 +1,12 @@
 #include "Bot.h"
 #include "PlaySide.h"
 #include <bits/stdc++.h>
+#define MAX_DEPTH 3
+#define INF (INT32_MIN / 2)
+
+// enum Piece { PAWN = 0, ROOK = 1, BISHOP = 2, KNIGHT = 3, QUEEN = 4, KING = 5, EMPTY = 6 };
+int         values[] = { 1,  5,  3,  3,  9, 90,  0};
+int capturedValues[] = { 1,  5,  5, 10, 10, 90,  0}; // myVersion
 
 extern std::ofstream f;
 extern std::string serializeMove(Move *m);
@@ -54,8 +60,6 @@ Bot::Bot() {
 
   for (int i = 0; i < 6; ++i)
     currentTable.captured[0][i] = currentTable.captured[1][i] = 0;
-  Q = std::queue<Move*>();
-  queueCount = 0;
 
   /* Add pawns */
   for (int i = A; i <= H; ++i) {
@@ -95,7 +99,7 @@ Bot::Bot() {
 Table* Bot::createModifiedTable(Move* move, Table table) {
   Table *ret = new Table;
   *ret = table;
-  Bot::recordMove(move, getSideToMove(), ret, false);
+  Bot::recordMove(move, currentSide, ret, false);
   return ret;
 }
 
@@ -109,7 +113,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
   KingPos kingPos = tableStruc->kingPos;
   /* You might find it useful to also separately
     * record last move in another custom field */
-  f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
+  // f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
 
   std::__cxx11::basic_string<char> src;
   std::__cxx11::basic_string<char> dest = *(move->getDestination());
@@ -217,8 +221,9 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
     }
   }
 
-  printTable(tableStruc);
+  // printTable(tableStruc);
 }
+
 
 Move* Bot::calculateNextMove() {
   /* Play move for the side the engine is playing (Hint: Main.getEngineSide())
@@ -226,88 +231,149 @@ Move* Bot::calculateNextMove() {
    *
    * Return move that you are willing to submit
    * Move is to be constructed via one of the factory methods declared in Move.h */
-  bool rocade = false;
-  queueCount = 0;
+  std::pair<Move*, int> p = Bot::calculateNextMove(&currentTable, getSideToMove(), 0);
 
-  for (int i = A; i <= H && !rocade; ++i) {
-    for (int j = 1; j <= 8 && !rocade; ++j) {
-      if (currentTable.table[i][j].color == getSideToMove() &&
-          currentTable.table[i][j].type != EMPTY) {
-        switch (currentTable.table[i][j].type) {
+  recordMove(p.first, getSideToMove());
+  return p.first;
+}
+
+std::pair<Move*, int> Bot::calculateNextMove(Table *tableStruc, bool sideToMove, int depth) {
+  // bool rocade = false;
+  // queueCount = 0;
+  std::queue<Move*> Q;
+  // int queueCount = 0;
+
+  if (depth == MAX_DEPTH)
+    return std::pair<Move*, int>(NULL, Bot::heuristic(tableStruc, sideToMove));
+
+  currentSide = (enum PlaySide)sideToMove;
+
+  for (int i = A; i <= H; ++i) {
+    for (int j = 1; j <= 8; ++j) {
+      if (tableStruc->table[i][j].color == sideToMove &&
+          tableStruc->table[i][j].type != EMPTY) {
+        switch (tableStruc->table[i][j].type) {
           case PAWN:
-            Bot::checkPawnMoves(&currentTable, i, j);
+            Bot::checkPawnMoves(tableStruc, i, j, Q);
             break;
           case KNIGHT:
-            Bot::checkKnightMoves(&currentTable, i, j);
+            Bot::checkKnightMoves(tableStruc, i, j, Q);
             break;
           case QUEEN:
-            Bot::checkBishopMoves(&currentTable, i, j);
-            Bot::checkRookMoves(&currentTable, i, j);
+            Bot::checkBishopMoves(tableStruc, i, j, Q);
+            Bot::checkRookMoves(tableStruc, i, j, Q);
             break;
           case KING:
-            rocade = Bot::checkKingMoves(&currentTable, i, j);
+            Bot::checkKingMoves(tableStruc, i, j, Q);
             break;
           case ROOK:
-            Bot::checkRookMoves(&currentTable, i, j);
+            Bot::checkRookMoves(tableStruc, i, j, Q);
             break;
           case BISHOP:
-            Bot::checkBishopMoves(&currentTable, i, j);
+            Bot::checkBishopMoves(tableStruc, i, j, Q);
             break;
           default:
             continue;
         };
       
-        if (rocade) {// force rocade
-          Move *m = NULL;
-          while (!Q.empty()) {
-            delete m;
-            m = Q.front();
-            Q.pop();
-          }
-          Q.push(m);
-          queueCount = 1;
-          break;
-        }
-      } else if (currentTable.table[i][j].type == EMPTY) {
+        // if (rocade) {// force rocade
+        //   Move *m = NULL;
+        //   while (!Q.empty()) {
+        //     delete m;
+        //     m = Q.front();
+        //     Q.pop();
+        //   }
+        //   Q.push(m);
+        //   queueCount = 1;
+        //   break;
+        // }
+      } else if (tableStruc->table[i][j].type == EMPTY) {
         for (int p = PAWN; p <= QUEEN; ++p)
-            if (currentTable.captured[getSideToMove()][p] != 0)
-              add(checkDropIn(&currentTable, i, j, (enum Piece)p));
+            if (tableStruc->captured[sideToMove][p] != 0)
+              add(checkDropIn(tableStruc, i, j, (enum Piece)p), Q);
       }
     }
   }
 
-  /* shit random number getter */
-  if (Q.empty()) {
-    return Move::resign();
-  }
-  Move *m1;
-  int move_index = (rand() % queueCount); 
-  int count = 0;
+  // /* shit random number getter */
+  // if (Q.empty()) {
+  //   return Move::resign();
+  // }
+  // Move *m1;
+  // int move_index = (rand() % queueCount); 
+  // int count = 0;
+
+  // while (!Q.empty()) {
+  //   Move *m = Q.front();
+  //   if (count == move_index) 
+  //     m1 = m;
+  //   count++;
+  //   f << serializeMove(m) << ", ";
+  //   Q.pop();
+  // }
+
+  // f << "\n------------\nCaptured:\n";
+  // for (int i = BLACK; i <= WHITE; ++i) {
+  //   f << (enum Piece)i <<" - ";
+  //   for (int p = PAWN; p <= QUEEN; ++p)
+  //     f << (int)(currentTable.captured[i][p]) << ' ';
+    
+  //   f << '\n';
+  // }
+
+  // f << "------------\nChosen move: " << serializeMove(m1) << " Pozitia regelui: ";
+  // f << (int)currentTable.kingPos[getSideToMove()].first << " " << (int)currentTable.kingPos[getSideToMove()].second << ' ';
+  // f << getSideToMove() << '\n';
+
+
+  std::pair<Move*, int> best = std::pair<Move*, int>(NULL, INT32_MIN);
 
   while (!Q.empty()) {
     Move *m = Q.front();
-    if (count == move_index) 
-      m1 = m;
-    count++;
-    f << serializeMove(m) << ", ";
     Q.pop();
+
+    Table *newTable = createModifiedTable(m, *tableStruc);
+
+    std::pair<Move*, int> p = calculateNextMove(newTable, 1 ^ sideToMove, depth + 1);
+    int score = - p.second;
+
+    if (score > best.second || (score == best.second && rand() % 2)) {
+      delete best.first;
+      best.first = m;
+      best.second = score;
+    } else {
+      delete m;
+    }
+
+    delete newTable;
+    delete p.first;
   }
 
-  f << "\n------------\nCaptured:\n";
-  for (int i = BLACK; i <= WHITE; ++i) {
-    f << (enum Piece)i <<" - ";
-    for (int p = PAWN; p <= QUEEN; ++p)
-      f << (int)(currentTable.captured[i][p]) << ' ';
-    
-    f << '\n';
-  }
-
-  f << "------------\nChosen move: " << serializeMove(m1) << " Pozitia regelui: ";
-  f << (int)currentTable.kingPos[getSideToMove()].first << " " << (int)currentTable.kingPos[getSideToMove()].second << ' ';
-  f << getSideToMove() << '\n';
-
-  recordMove(m1, getSideToMove());
-  return m1;
+  currentSide = (enum PlaySide)(1 ^ sideToMove);
+  return best;
 }
 
 std::string Bot::getBotName() { return Bot::BOT_NAME; }
+
+int Bot::heuristic(Table *tableStruc, bool sideToMove) {
+  int score = 0;
+  for (int i = A; i <= H; ++i) {
+    for (int j = 1; j <= 8; ++j) {
+      if (tableStruc->table[i][j].color == sideToMove)
+        score += values[tableStruc->table[i][j].type];
+      else
+        score -= values[tableStruc->table[i][j].type];
+    }
+  }
+
+  for (int i = PAWN; i <= QUEEN; ++i) {
+    score += capturedValues[i] * tableStruc->captured[sideToMove][i];
+    score -= capturedValues[i] * tableStruc->captured[1 ^ sideToMove][i];
+  }
+
+
+  // printTable(tableStruc);
+  // f << "\n---------------  Score: " << score << "  ---------------\n";
+
+  return score;
+}
