@@ -34,7 +34,15 @@ struct PieceData {
   {}
 };
 
-typedef std::vector <std::vector <PieceData> > Table;
+typedef std::vector <std::vector <PieceData> > SimpleTable;
+typedef std::vector <std::pair <int8_t, int8_t>> KingPos;
+
+struct Table {
+  SimpleTable table;
+  int8_t captured[2][6];
+  KingPos kingPos;
+};
+
 
 class Bot {
  private:
@@ -46,8 +54,8 @@ class Bot {
   int queueCount = 0;
 
   Table currentTable;
-  int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
-  std::vector <std::pair <int8_t, int8_t> > kingPos;
+  // int8_t captured[2][6] = {{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}};
+  // std::vector <std::pair <int8_t, int8_t> > kingPos;
 
   /* Declare custom fields above */
   Bot();
@@ -77,13 +85,13 @@ class Bot {
   void printTable(Table *table);
 
   void add(Move *m);
-  Move* checkDropIn(int8_t col, int8_t row, enum Piece p);
-  Move* checkPosition(int8_t col, int8_t row, int8_t i, int8_t j, bool king);
-  void checkPawnMoves(int8_t col, int8_t row);
-  void checkBishopMoves(int8_t col, int8_t row);
-  void checkKnightMoves(int8_t col, int8_t row);
-  void checkRookMoves(int8_t col, int8_t row);
-  bool checkKingMoves(int8_t col, int8_t row);
+  Move* checkDropIn(Table *tableStruc, int8_t col, int8_t row, enum Piece p);
+  Move* checkPosition(Table *tableStruc, int8_t col, int8_t row, int8_t i, int8_t j, bool king);
+  void checkPawnMoves(Table *tableStruc, int8_t col, int8_t row);
+  void checkBishopMoves(Table *tableStruc, int8_t col, int8_t row);
+  void checkKnightMoves(Table *tableStruc, int8_t col, int8_t row);
+  void checkRookMoves(Table *tableStruc, int8_t col, int8_t row);
+  bool checkKingMoves(Table *tableStruc, int8_t col, int8_t row);
   bool isCheck(Table crtTable);
   bool isCheck(Table crtTable, int8_t king_x, int8_t king_y);
 

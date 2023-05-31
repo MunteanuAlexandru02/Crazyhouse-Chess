@@ -1,6 +1,5 @@
 #include "Bot.h"
 #include "PlaySide.h"
-
 #include <bits/stdc++.h>
 
 extern std::ofstream f;
@@ -30,8 +29,9 @@ std::optional<std::string> coordToStr(int8_t x, int8_t y) {
 void Bot::printTable() {
   printTable(&currentTable);
 }
-void Bot::printTable(Table *table) {
+void Bot::printTable(Table *tableStruc) {
   char pieceChar[] = "PRBNQK ";
+  SimpleTable *table = &(tableStruc->table);
   for (int i = A; i <= H; ++i) {
     f << '|';
     for (int j = 1; j <= 8; ++j) {
@@ -50,40 +50,43 @@ void Bot::printTable(Table *table) {
 Bot::Bot() {
   srand(time(0));
   f << "Before constructing table\n\n";
-  currentTable = std::vector(N + 1, std::vector <PieceData>(N + 1, PieceData()));
+  currentTable.table = std::vector(N + 1, std::vector <PieceData>(N + 1, PieceData()));
+
+  for (int i = 0; i < 6; ++i)
+    currentTable.captured[0][i] = currentTable.captured[1][i] = 0;
   Q = std::queue<Move*>();
   queueCount = 0;
 
   /* Add pawns */
   for (int i = A; i <= H; ++i) {
-    currentTable[i][2] = PieceData(PAWN, WHITE);
-    currentTable[i][7] = PieceData(PAWN, BLACK);
+    currentTable.table[i][2] = PieceData(PAWN, WHITE);
+    currentTable.table[i][7] = PieceData(PAWN, BLACK);
   }
 
   /* Add ROOOOOOOOOOOOOOOOOOOOOOOOOOOOK */
-  currentTable[H][8] = currentTable[A][8] = PieceData(ROOK, BLACK);
-  currentTable[H][1] = currentTable[A][1] = PieceData(ROOK, WHITE);
+  currentTable.table[H][8] = currentTable.table[A][8] = PieceData(ROOK, BLACK);
+  currentTable.table[H][1] = currentTable.table[A][1] = PieceData(ROOK, WHITE);
 
   /* Add Bishops */
-  currentTable[C][8] = currentTable[F][8] = PieceData(BISHOP, BLACK);
-  currentTable[C][1] = currentTable[F][1] = PieceData(BISHOP, WHITE);
+  currentTable.table[C][8] = currentTable.table[F][8] = PieceData(BISHOP, BLACK);
+  currentTable.table[C][1] = currentTable.table[F][1] = PieceData(BISHOP, WHITE);
   
   /* Add Knights */
-  currentTable[B][1] = PieceData(KNIGHT, WHITE);
-  currentTable[G][1] = PieceData(KNIGHT, WHITE);
+  currentTable.table[B][1] = PieceData(KNIGHT, WHITE);
+  currentTable.table[G][1] = PieceData(KNIGHT, WHITE);
   
-  currentTable[B][8] = PieceData(KNIGHT, BLACK);
-  currentTable[G][8] = PieceData(KNIGHT, BLACK);
+  currentTable.table[B][8] = PieceData(KNIGHT, BLACK);
+  currentTable.table[G][8] = PieceData(KNIGHT, BLACK);
 
   /* Add Queens */
-  currentTable[D][8] = PieceData(QUEEN, BLACK);
-  currentTable[D][1] = PieceData(QUEEN, WHITE);
+  currentTable.table[D][8] = PieceData(QUEEN, BLACK);
+  currentTable.table[D][1] = PieceData(QUEEN, WHITE);
 
   /* Add Kings */
-  currentTable[E][8] = PieceData(KING, BLACK);
-  currentTable[E][1] = PieceData(KING, WHITE);
-  kingPos.push_back(std::pair<int8_t, int8_t>(E, 8));
-  kingPos.push_back(std::pair<int8_t, int8_t>(E, 1));
+  currentTable.table[E][8] = PieceData(KING, BLACK);
+  currentTable.table[E][1] = PieceData(KING, WHITE);
+  currentTable.kingPos.push_back(std::pair<int8_t, int8_t>(E, 8));
+  currentTable.kingPos.push_back(std::pair<int8_t, int8_t>(E, 1));
 
   f << "Initial table:\n";
   printTable();
@@ -91,7 +94,7 @@ Bot::Bot() {
 
 Table* Bot::createModifiedTable(Move* move, Table table) {
   Table *ret = new Table;
-  *ret = table; 
+  *ret = table;
   Bot::recordMove(move, getSideToMove(), ret, false);
   return ret;
 }
@@ -101,7 +104,9 @@ void Bot::recordMove(Move* move, PlaySide sideToMove) {
 }
 
 void Bot::recordMove(Move* move, PlaySide sideToMove,
-                     Table *table, bool updateAux) {
+                     Table *tableStruc, bool updateAux) {
+  SimpleTable *table = &(tableStruc->table);
+  KingPos kingPos = tableStruc->kingPos;
   /* You might find it useful to also separately
     * record last move in another custom field */
   f << "\n" << (sideToMove == BLACK ? "BLACK":"WHITE") << " moves\n";
@@ -112,9 +117,9 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
 
   if (pieceDest->type != EMPTY && updateAux) {
     if (pieceDest->promoted == true) {
-      captured[sideToMove][PAWN]++;
+      (tableStruc->captured)[sideToMove][PAWN]++;
     } else {
-      captured[sideToMove][pieceDest->type]++;
+      (tableStruc->captured)[sideToMove][pieceDest->type]++;
     }
   }
 
@@ -157,9 +162,10 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
 
       /* Update kingPos */
       if (updateAux) {
-        kingPos[sideToMove].first = getCol(dest);
-        kingPos[sideToMove].second = getRow(dest);
+        tableStruc->kingPos[sideToMove].first = getCol(dest);
+        tableStruc->kingPos[sideToMove].second = getRow(dest);
       }
+
     } else if (pieceDest->type == PAWN) {  // testare En Passant
       PieceData *pieceBehind;
       switch(sideToMove) {
@@ -175,7 +181,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
 
       if (pieceBehind->enPassantEligible == true && pieceBehind->color != sideToMove) {
         if (updateAux)
-          captured[sideToMove][PAWN]++;
+          (tableStruc->captured)[sideToMove][PAWN]++;
         pieceBehind->type = EMPTY;
       }
     }
@@ -183,7 +189,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
     *pieceDest = PieceData(*(move->getReplacement()), sideToMove, false);
     pieceDest->moved = true;
     if (updateAux)
-      captured[sideToMove][pieceDest->type]--;
+      (tableStruc->captured)[sideToMove][pieceDest->type]--;
   }
 
   for (int i = A; i <= H; ++i)
@@ -211,7 +217,7 @@ void Bot::recordMove(Move* move, PlaySide sideToMove,
     }
   }
 
-  printTable(table);
+  printTable(tableStruc);
 }
 
 Move* Bot::calculateNextMove() {
@@ -225,31 +231,32 @@ Move* Bot::calculateNextMove() {
 
   for (int i = A; i <= H && !rocade; ++i) {
     for (int j = 1; j <= 8 && !rocade; ++j) {
-      if (currentTable[i][j].color == getSideToMove() &&
-          currentTable[i][j].type != EMPTY) {
-        switch (currentTable[i][j].type) {
+      if (currentTable.table[i][j].color == getSideToMove() &&
+          currentTable.table[i][j].type != EMPTY) {
+        switch (currentTable.table[i][j].type) {
           case PAWN:
-            Bot::checkPawnMoves(i, j);
+            Bot::checkPawnMoves(&currentTable, i, j);
             break;
           case KNIGHT:
-            Bot::checkKnightMoves(i, j);
+            Bot::checkKnightMoves(&currentTable, i, j);
             break;
           case QUEEN:
-            Bot::checkBishopMoves(i, j);
-            Bot::checkRookMoves(i, j);
+            Bot::checkBishopMoves(&currentTable, i, j);
+            Bot::checkRookMoves(&currentTable, i, j);
             break;
           case KING:
-            rocade = Bot::checkKingMoves(i, j);
+            rocade = Bot::checkKingMoves(&currentTable, i, j);
             break;
           case ROOK:
-            Bot::checkRookMoves(i, j);
+            Bot::checkRookMoves(&currentTable, i, j);
             break;
           case BISHOP:
-            Bot::checkBishopMoves(i, j);
+            Bot::checkBishopMoves(&currentTable, i, j);
             break;
           default:
             continue;
         };
+      
         if (rocade) {// force rocade
           Move *m = NULL;
           while (!Q.empty()) {
@@ -261,10 +268,10 @@ Move* Bot::calculateNextMove() {
           queueCount = 1;
           break;
         }
-      } else if (currentTable[i][j].type == EMPTY) {
+      } else if (currentTable.table[i][j].type == EMPTY) {
         for (int p = PAWN; p <= QUEEN; ++p)
-            if (captured[getSideToMove()][p] != 0)
-              add(checkDropIn(i, j, (enum Piece)p));
+            if (currentTable.captured[getSideToMove()][p] != 0)
+              add(checkDropIn(&currentTable, i, j, (enum Piece)p));
       }
     }
   }
@@ -290,12 +297,14 @@ Move* Bot::calculateNextMove() {
   for (int i = BLACK; i <= WHITE; ++i) {
     f << (enum Piece)i <<" - ";
     for (int p = PAWN; p <= QUEEN; ++p)
-      f << (int)(captured[i][p]) << ' ';
+      f << (int)(currentTable.captured[i][p]) << ' ';
     
     f << '\n';
   }
 
-  f << "------------\nChosen move: " << serializeMove(m1) << '\n';
+  f << "------------\nChosen move: " << serializeMove(m1) << " Pozitia regelui: ";
+  f << (int)currentTable.kingPos[getSideToMove()].first << " " << (int)currentTable.kingPos[getSideToMove()].second << ' ';
+  f << getSideToMove() << '\n';
 
   recordMove(m1, getSideToMove());
   return m1;
