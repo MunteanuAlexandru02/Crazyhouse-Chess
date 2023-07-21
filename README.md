@@ -1,14 +1,14 @@
 # Crazyhouse Chess
 
-## Etapa 1:
-un bot care este capabil sa joace un joc de sah complet, respectand toate
-miscarile legale din jocul de Crazyhouse
-
 ## Echipa: The Escapists
 	- Chiriac Cristian-Alexandru
 	- Mogodeanu Claudiu
 	- Munteanu Alexandru-Constantin
 	- Pandelica Mihai-Lucian
+
+# Etapa 1:
+Un bot care este capabil sa joace un joc de sah complet, respectand toate
+miscarile legale din jocul de Crazyhouse
 
 Acest proiect isi propune sa rezolve cerinta primei etape din cadrul proiectului
 la PA. Botul este capabil sa:
@@ -20,7 +20,7 @@ regulilor.
 * Verifice daca regele este in sah si sa efectueze o mutare legala.
 * Realizeze drop-in-urile specifice modului de joc Crazyhouse.
 
-## Instructiuni de compilare:
+## Instructiuni de utilizare:
 	Compilare: make build
 
 	Rulare: make run
@@ -131,3 +131,82 @@ functie, pentru a descoperi mult mai usor anumite bug-uri si defecte in cod.
 	https://en.wikipedia.org/wiki/En_passant
 	https://en.wikipedia.org/wiki/Castling#Requirements
 
+# Etapa 2:
+La fel ca in prima etapa, botul de sah este capabil sa joace un joc
+complet, de aceasta data fiind capabil sa analizeze tabla de joc si sa
+aleaga o mutare avantajoasa.
+
+## Imbunatatiri aduse etapei 1:
+
+Am schimbat forma functiilor astfel incat acestea sa primeasca o structura de
+tip 'Table', care, pe langa matricea propriu-zisa cu reprezentarea
+pieselor, contine si piesele capturate si pozitiile regilor pentru fiecare jucator.
+Acest lucru ne ofera posibilitatea de a lucra cu diferite configuratii ale
+jocului, nu doar cea curenta (asa cum era in cazul etapei 1, unde aveam
+un singur set de variabile globale care sa retina aceste date, impartite
+de intreg programul).
+
+Astfel, putem implementa cautarea in spatiul posibilelor mutari, pornind de la
+configuratia curenta, si generand pe parcurs reprezentari ale fiecarei stari,
+iar mai departe sa alegem varianta cea mai avantajoasa.
+
+Vom detalia mai jos procesul de decizie a urmatoarei mutari:
+
+* Am folosit algoritmul Negamax, pentru a evita codul duplicat, pe care l-am
+implementat in functia 'calculateNextMove'.
+Am generat coada de posibile mutari, pe care am parcurs-o si am identificat
+varianta pentru care functia euristica ofera cea mai mare valoare dupa analiza
+configuratiei. De asemenea, am aplicat si un mijloc de randomizare pentru
+alegerea intre variantele pentru care functia genereaza valoarea maxima
+la iteratia curenta, pentru a varia parcursul jocului. Spre exemplu, in
+cazul primelor mutari dintr-un meci, functia va genera valoarea 0 pentru
+toate posibilele mutari (toate piesele sunt pe tabla, nu exista inca piese
+capturate), iar daca pastram prima mutare cu valoare maxima gasita vom muta
+mereu din aceeasi parte a tablei, cel putin pentru o perioada.
+	
+* Am implementat o euristica care asociaza fiecarei piese un punctaj, 
+piesele capturate avand un scor mai mare, deoarece am dorit
+ca versatilitatea mai mare a pieselor capturate sa reiasa din
+punctaj.
+Euristica calculeaza un scor adunand punctajul pieselor proprii
+(capturate si pe tabla) si scazand numarul de puncte asociat pieselor adversarului.
+
+* Suplimentar, am vrut ca botul sa incerce sa dea sah mai rapid, astfel incat am crescut
+artificial scorul la un anumit pas daca in tabla curenta regele advers este in sah.
+Am ales ca valoare bonus 5, intrucat nu am vrut ca botul sa fie prea agresiv in propriul detriment;
+cu o valoare mai mare, ar fi riscat mai multe piese si mai des, ceea ce ducea la situatia in care
+adversarul avea un numar foarte mare de piese in mana si, eventual, sah mat.
+
+* Piesele au asociate urmatoarele scoruri:
+
+
+	| Piesa     	| Capturata     | Normala   
+	| ------------- | ------------- | --------    |
+	| `Pion`        | 	1       | 	1     |
+	| `Nebun`       | 	5       | 	3     |
+	| `Cal`       	| 	10      | 	3     |
+	| `Tura`        | 	5       | 	5     |
+	| `Regina`      | 	10      | 	9     |
+	| `Rege`       	| 	90      | 	90    |
+	| `Casuta Goala`| 	0       | 	0     |
+
+## Extra:
+Pentru etapa 2, am incercat sa aplicam optimizarea Alpha-Beta pruning pentru
+algoritmul Negamax, cu o sortare a mutarilor disponibile in functie de piesa
+capturata, daca ea exista. In urma testarii, indiferent daca modificam valorile
+pieselor sau cresteam adancimea cautarii (care era posibila datorita optimizarii),
+am observat ca obtinem rezultate mai slabe impotriva Stockfish Hard, deoarece
+cautarea se oprea mult prea repede, iar randomizarea mentionata mai sus nu mai
+avea efect, deci se pierdea variatia zonelor in care efectuam mutari la inceputul
+jocului.
+
+
+## Responsabilitatea fiecarui membru al echipei
+
+La aceasta etapa am lucrat exclusiv impreuna, folosind in continuare extensia Live Share, responsabilitatile fiind impartite on-the-spot.
+
+
+## Resurse:
+
+	https://en.wikipedia.org/wiki/Negamax
+	https://ocw.cs.pub.ro/courses/pa/laboratoare/laborator-05
