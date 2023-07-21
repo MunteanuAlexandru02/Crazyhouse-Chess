@@ -210,4 +210,3 @@ La aceasta etapa am lucrat exclusiv impreuna, folosind in continuare extensia Li
 
 	https://en.wikipedia.org/wiki/Negamax
 	https://ocw.cs.pub.ro/courses/pa/laboratoare/laborator-05
-

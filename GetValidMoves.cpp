@@ -7,14 +7,14 @@ inline bool betweenBorders (int8_t x, int8_t y) {
   return x > 0 && x <= 8 && y > 0 && y <= 8;
 }
 
-void Bot::add(Move *m) {
+void Bot::add(Move *m, std::queue<Move*> &Q) {
   if (m != NULL) {
     Q.push(m);
-    queueCount++;
   }
 }
 
-Move* Bot::checkDropIn(int8_t col, int8_t row, enum Piece p) {
+Move* Bot::checkDropIn(Table *tableStruc, int8_t col, int8_t row, enum Piece p) {
+  SimpleTable currentTable = tableStruc->table;
   if (!betweenBorders(col, row) || currentTable[col][row].type != EMPTY)
     return NULL;
   
@@ -22,7 +22,7 @@ Move* Bot::checkDropIn(int8_t col, int8_t row, enum Piece p) {
     return NULL;
 
   Move *m = Move::dropIn(coordToStr(col, row), p);
-  Table *table = Bot::createModifiedTable(m, currentTable);
+  Table *table = Bot::createModifiedTable(m, *tableStruc);
 
   bool check = isCheck(*table);
   delete table;
@@ -35,28 +35,29 @@ Move* Bot::checkDropIn(int8_t col, int8_t row, enum Piece p) {
 }
 
 /* check whether the final position of a given move leaves the king attacked */
-Move* Bot::checkPosition(int8_t startCol, int8_t startRow,
+Move* Bot::checkPosition(Table *tableStruc, int8_t startCol, int8_t startRow,
              int8_t endCol, int8_t endRow, bool king = false) {
+  SimpleTable table = tableStruc->table;
   if (betweenBorders(endCol, endRow)) {
-    if (currentTable[endCol][endRow].type == EMPTY ||
-      currentTable[endCol][endRow].color != getSideToMove()) {
+    if (table[endCol][endRow].type == EMPTY ||
+      table[endCol][endRow].color != currentSide) {
       Move* m = Move::moveTo(coordToStr(startCol, startRow),
                    coordToStr(endCol, endRow));
 
-      Table *table = Bot::createModifiedTable(m, currentTable);
+      Table *newTable = Bot::createModifiedTable(m, *tableStruc);
 
       if (king) { // the piece that's moved is the king itself
-        if (isCheck(*table, endCol, endRow) == false) {
-          delete table;
+        if (isCheck(*newTable, endCol, endRow) == false) {
+          delete newTable;
           return m;
         }
       } else {
-        if (isCheck(*table) == false) {
-          delete table;
+        if (isCheck(*newTable) == false) {
+          delete newTable;
           return m;
         }
       }
-      delete table;
+      delete newTable;
       delete m;
     }
   }
@@ -64,24 +65,26 @@ Move* Bot::checkPosition(int8_t startCol, int8_t startRow,
 }
 
 /* checks king's moves and returns whether a castling was found */
-bool Bot::checkKingMoves(int8_t col, int8_t row) {
+bool Bot::checkKingMoves(Table *tableStruc,int8_t col, int8_t row, std::queue<Move*> &Q) {
   int offset_x[8] = { 1,  1, -1, -1,  0,  0, -1,  1};
   int offset_y[8] = { 1, -1,  1, -1,  1, -1,  0,  0};
   int i;
 
-  if (currentTable[col][row].moved == false && !isCheck(currentTable)) {
+  SimpleTable currentTable = tableStruc->table;
+
+  if (currentTable[col][row].moved == false && !isCheck(*tableStruc)) {
     if (currentTable[A][row].type == ROOK &&
         currentTable[A][row].moved == false) { // long castling
       if (currentTable[B][row].type==EMPTY &&
           currentTable[C][row].type==EMPTY &&
           currentTable[D][row].type==EMPTY) {
-        Move *m = checkPosition(col, row, col - 2, row, true);
-        Move *m1 = checkPosition(col, row, col - 3, row, true);
-        Move *m2 = checkPosition(col, row, col - 1, row, true);
+        Move *m = checkPosition(tableStruc, col, row, col - 2, row, true);
+        Move *m1 = checkPosition(tableStruc, col, row, col - 3, row, true);
+        Move *m2 = checkPosition(tableStruc, col, row, col - 1, row, true);
         delete m1;
         delete m2;
         if (m1 && m2 && m) {
-          add(m);
+          add(m, Q);
           return true; // force castling
         }
         delete m;
@@ -92,11 +95,11 @@ bool Bot::checkKingMoves(int8_t col, int8_t row) {
         currentTable[H][row].moved == false) { // short castling
       if (currentTable[F][row].type==EMPTY &&
           currentTable[G][row].type==EMPTY) {
-        Move *m = checkPosition(col, row, col + 2, row, true);
-        Move *m1 = checkPosition(col, row, col + 1, row, true);
+        Move *m = checkPosition(tableStruc, col, row, col + 2, row, true);
+        Move *m1 = checkPosition(tableStruc, col, row, col + 1, row, true);
         delete m1;
         if (m1 && m) {
-          add(m);
+          add(m, Q);
           return true; // force castling
         }
         delete m;
@@ -105,14 +108,16 @@ bool Bot::checkKingMoves(int8_t col, int8_t row) {
   }
 
   for (i = 0; i < 8; i++)
-    add(checkPosition(col, row, col + offset_x[i], row + offset_y[i], true));
+    add(checkPosition(tableStruc, col, row, col + offset_x[i], row + offset_y[i], true), Q);
 
   return false; // no castling found, so it's not forced
 }
 
 /* check possible move for PAAAWN - NOT SIGMA PIECE */
-void Bot::checkPawnMoves(int8_t col, int8_t row) {
+void Bot::checkPawnMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q) {
   int8_t nextRow, nextNextRow, firstRow;
+
+  SimpleTable currentTable = tableStruc->table;
 
   switch ((int8_t)(currentTable[col][row].color)) {
     case BLACK:
@@ -136,111 +141,113 @@ void Bot::checkPawnMoves(int8_t col, int8_t row) {
   /* just one basic step ahead */
   if (betweenBorders(col, nextRow) &&
     currentTable[col][nextRow].type == EMPTY) {
-    m = checkPosition(col, row, col, nextRow);
+    m = checkPosition(tableStruc, col, row, col, nextRow);
     if (m != NULL && (nextRow == 1 || nextRow == 8)) {
-      add(Move::promote(m->getSource(), m->getDestination(), QUEEN));
-      add(Move::promote(m->getSource(), m->getDestination(), KNIGHT));
+      add(Move::promote(m->getSource(), m->getDestination(), QUEEN), Q);
+      add(Move::promote(m->getSource(), m->getDestination(), KNIGHT), Q);
       delete m;
-    } else add(m);
+    } else add(m, Q);
     /* 2 steps ahead*/
     if (row == firstRow && betweenBorders(col, nextNextRow) &&
       currentTable[col][nextNextRow].type == EMPTY)
-      add(checkPosition(col, row, col, nextNextRow));
+      add(checkPosition(tableStruc, col, row, col, nextNextRow), Q);
   }
 
   for (int i = -1; i <= 1; i+=2) // left and right diagonal
     if (betweenBorders(col - i, nextRow)) {
       if ((currentTable[col - i][nextRow].type != EMPTY &&
-          currentTable[col - i][nextRow].color != getSideToMove()) ||
+          currentTable[col - i][nextRow].color != currentSide) ||
           (currentTable[col - i][nextRow].type == EMPTY &&
           currentTable[col - i][row].enPassantEligible)) {
-        m = checkPosition(col, row, col - i, nextRow);
+        m = checkPosition(tableStruc, col, row, col - i, nextRow);
         if (m != NULL && (nextRow == 1 || nextRow == 8)) {
-          add(Move::promote(m->getSource(), m->getDestination(), QUEEN));
-          add(Move::promote(m->getSource(), m->getDestination(), KNIGHT));
+          add(Move::promote(m->getSource(), m->getDestination(), QUEEN), Q);
+          add(Move::promote(m->getSource(), m->getDestination(), KNIGHT), Q);
           delete m;
-        } else add(m);
+        } else add(m, Q);
       }
     }
 }
 
 /* check possible moves for BISHOP */
-void Bot::checkBishopMoves(int8_t col, int8_t row) {
+void Bot::checkBishopMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q) {
+  SimpleTable currentTable = tableStruc->table;
    /* up right */
   for (int i = col + 1, j = row + 1; betweenBorders(i ,j); ++i, ++j) {
-    add(checkPosition(col, row, i, j));
+    add(checkPosition(tableStruc, col, row, i, j), Q);
     if (currentTable[i][j].type != EMPTY)
       break;
   }
 
    /* down right */
   for (int i = col + 1, j = row - 1; betweenBorders(i ,j); ++i, --j) {
-    add(checkPosition(col, row, i, j));
+    add(checkPosition(tableStruc, col, row, i, j), Q);
     if (currentTable[i][j].type != EMPTY)
       break;
   }
 
    /* up left */
   for (int i = col - 1, j = row + 1; betweenBorders(i ,j); --i, ++j) {
-    add(checkPosition(col, row, i, j));
+    add(checkPosition(tableStruc, col, row, i, j), Q);
     if (currentTable[i][j].type != EMPTY)
       break;
   }
 
    /* down left */
   for (int i = col - 1, j = row - 1; betweenBorders(i ,j); --i, --j) {
-    add(checkPosition(col, row, i, j));
+    add(checkPosition(tableStruc, col, row, i, j), Q);
     if (currentTable[i][j].type != EMPTY)
       break;
   }
 }
 
 /* check moves for KNIGHT */
-void Bot::checkKnightMoves(int8_t col, int8_t row) {
-  add(checkPosition(col, row, col + 2, row + 1));
-  add(checkPosition(col, row, col - 2, row + 1));
-  add(checkPosition(col, row, col + 2, row - 1));
-  add(checkPosition(col, row, col - 2, row - 1));
-  add(checkPosition(col, row, col + 1, row + 2));
-  add(checkPosition(col, row, col - 1, row + 2));
-  add(checkPosition(col, row, col + 1, row - 2));
-  add(checkPosition(col, row, col - 1, row - 2));
+void Bot::checkKnightMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q) {
+  add(checkPosition(tableStruc, col, row, col + 2, row + 1), Q);
+  add(checkPosition(tableStruc, col, row, col - 2, row + 1), Q);
+  add(checkPosition(tableStruc, col, row, col + 2, row - 1), Q);
+  add(checkPosition(tableStruc, col, row, col - 2, row - 1), Q);
+  add(checkPosition(tableStruc, col, row, col + 1, row + 2), Q);
+  add(checkPosition(tableStruc, col, row, col - 1, row + 2), Q);
+  add(checkPosition(tableStruc, col, row, col + 1, row - 2), Q);
+  add(checkPosition(tableStruc, col, row, col - 1, row - 2), Q);
 }
 
 /* check moves for THE ROOOOOOOK */
-void Bot::checkRookMoves(int8_t col, int8_t row) {
+void Bot::checkRookMoves(Table *tableStruc, int8_t col, int8_t row, std::queue<Move*> &Q) {
+  SimpleTable currentTable = tableStruc->table;
   /* check left - if black, else check right*/
   for (int i = col + 1; i <= H; i++) {
-    add(checkPosition(col, row, i, row));
+    add(checkPosition(tableStruc, col, row, i, row), Q);
     if (currentTable[i][row].type != EMPTY)
       break;
   }
 
   /* check right - if black, else check left */
   for (int i = col - 1; i >= A; i--) {
-    add(checkPosition(col, row, i, row));
+    add(checkPosition(tableStruc, col, row, i, row), Q);
     if (currentTable[i][row].type != EMPTY)
       break;
   }
 
   /* check down - if black, else check up */
   for (int i = row + 1; i <= 8; i++) {
-    add(checkPosition(col, row, col, i));
+    add(checkPosition(tableStruc, col, row, col, i), Q);
     if (currentTable[col][i].type != EMPTY)
       break;
   }
 
   /* check up - if black, else check down */
   for (int i = row - 1; i >= 1; i--) {
-    add(checkPosition(col, row, col, i));
+    add(checkPosition(tableStruc, col, row, col, i), Q);
     if (currentTable[col][i].type != EMPTY)
       break;
   }
 }
 
 bool Bot::isCheck(Table crtTable) {
-  int8_t king_x = kingPos[getSideToMove()].first;
-  int8_t king_y = kingPos[getSideToMove()].second;
+  int8_t king_x = crtTable.kingPos[currentSide].first;
+  int8_t king_y = crtTable.kingPos[currentSide].second;
   return isCheck(crtTable, king_x, king_y);
 }
 
@@ -248,9 +255,11 @@ bool Bot::isCheck(Table crtTable) {
  * Given a table and the position of the king of the side to move,
  * check whether said king is attacked.
  */
-bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
+bool Bot::isCheck(Table tableStruc, int8_t king_x, int8_t king_y) {
 
   int8_t x, y;
+
+  SimpleTable crtTable = tableStruc.table;
 
   /* check for knights */
   int offset_x[8] = {-2, -1,  1,  2,  2,  1, -1, -2};
@@ -262,7 +271,7 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
     y = king_y + offset_y[i];
 
     if (betweenBorders(x, y)) {
-      if (crtTable[x][y].color != getSideToMove() &&
+      if (crtTable[x][y].color != currentSide &&
         crtTable[x][y].type == KNIGHT) {
           return true;
         }
@@ -273,7 +282,7 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
   int offset_x_pawn[2];
   int offset_y_pawn[2];
   
-  if (getSideToMove() == BLACK) {
+  if (currentSide == BLACK) {
     offset_x_pawn[0] = 1;
     offset_x_pawn[1] = -1;
     offset_y_pawn[0] = -1;
@@ -290,7 +299,7 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
     y = king_y + offset_y_pawn[i];
 
     if (betweenBorders(x, y)) {
-      if (crtTable[x][y].color != getSideToMove() &&
+      if (crtTable[x][y].color != currentSide &&
         crtTable[x][y].type == PAWN) {
         return true;
       }
@@ -306,7 +315,7 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
     y = king_y + offset_y_bq[i];
 
     while (betweenBorders(x, y)) {
-      if (crtTable[x][y].color != getSideToMove()) {
+      if (crtTable[x][y].color != currentSide) {
         if (crtTable[x][y].type == BISHOP ||
           crtTable[x][y].type == QUEEN) {
             return true;
@@ -336,7 +345,7 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
     y = king_y + offset_y_rq[i];
 
     while (betweenBorders(x, y)) {
-      if (crtTable[x][y].color != getSideToMove()) {
+      if (crtTable[x][y].color != currentSide) {
         if (crtTable[x][y].type == ROOK ||
           crtTable[x][y].type == QUEEN) {
             return true;
@@ -354,8 +363,8 @@ bool Bot::isCheck(Table crtTable, int8_t king_x, int8_t king_y) {
   }
 
   /* check for other king */
-  if ((abs(king_x - kingPos[1 ^ getSideToMove()].first) <= 1) &&
-      (abs(king_y - kingPos[1 ^ getSideToMove()].second) <= 1))
+  if ((abs(king_x - tableStruc.kingPos[1 ^ currentSide].first) <= 1) &&
+      (abs(king_y - tableStruc.kingPos[1 ^ currentSide].second) <= 1))
     return true;
 
   return false;
